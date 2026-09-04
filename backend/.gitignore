@@ -1,0 +1,107 @@
+# =============================================================
+# .gitignore keamanan maksimal untuk backend website desa citapen
+# =============================================================
+
+# ---------- Variabel lingkungan (rahasia) ----------
+# Jangan pernah commit file .env yang berisi rahasia asli
+.env
+.env.*
+!.env.example
+
+# ---------- Dependensi ----------
+# Node modules tidak pernah masuk ke git (sangat besar)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+
+# ---------- Hasil build ----------
+# Folder hasil kompilasi typescript tidak perlu masuk git
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# ---------- File unggahan pengguna ----------
+# Foto profil, foto produk, dan gambar berita yang diunggah pengguna
+unggahan/
+uploads/
+*.png.bak
+*.jpg.bak
+
+# ---------- Log aplikasi ----------
+# Log berisi jejak informasi sensitif, jangan pernah di-commit
+logs/
+*.log
+pino-pretty.log
+log-*.json
+
+# ---------- Hasil pengujian ----------
+coverage/
+html-report/
+*.xml
+*.lcov
+# kecuali konfigurasi jalankan jetbrains yang memang berformat xml
+!.idea/runConfigurations/*.xml
+
+# ---------- Kredensial dan rahasia ----------
+# Berbagai file rahasia umum
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.jks
+*.p8
+id_rsa
+id_ed25519
+*.pem.txt
+service-account.json
+credentials.json
+firebase-adminsdk.json
+
+# ---------- Berkas sistem dan editor ----------
+.DS_Store
+Thumbs.db
+Desktop.ini
+# Konfigurasi pribadi jetbrains (workspace.xml dll.) di-ignore
+# lewat .idea/.gitignore, sedangkan konfigurasi jalankan (.idea/runConfigurations)
+# ikut di-commit agar semua anggota tim punya konfigurasi yang sama
+.idea/workspace.xml
+.idea/shelf/
+.idea/httpRequests/
+.idea/queries/
+.idea/dataSources/
+.idea/dataSources.local.xml
+.vscode/
+*.swp
+*.swo
+*~
+.~lock.*
+
+# ---------- Berkas sementara ----------
+tmp/
+temp/
+*.tmp
+.tmp/
+.cache/
+.turbo/
+
+# ---------- Docker (jika dipakai di kemudian hari) ----------
+docker-compose.override.yml
+Dockerfile.local
+
+# ---------- Keamanan tambahan ----------
+# File konfigurasi rahasia apa pun yang tertinggal
+*.local
+.env.local
+config.local.json
+secrets/
+
+# Catatan instruksi kerja (tidak untuk di-commit)
+instruksi.md
+
+# Backup basis data
+database/backup/

@@ -1,0 +1,1755 @@
+# ============================================================
+# Spesifikasi API (OpenAPI 3.0.3) Backend Desa Citapen
+# ------------------------------------------------------------
+# Layanan web profil Desa Citapen dan katalog produk UMKM.
+#
+# Cara membaca:
+#   - Semua rute diawali dengan /api
+#   - Base URL lokal : http://localhost:3000/api
+#   - Base URL produksi : https://<nama-layanan>.onrender.com/api
+#   - Rute yang butuh izin memakai header:
+#       Authorization: Bearer <token>
+#   - Tanggapan sukses selalu berbentuk:
+#       { "status": "sukses", "pesan": "...", "data": ... }
+#   - Tanggapan gagal selalu berbentuk:
+#       { "status": "gagal", "pesan": "...", "kode": "...", "detail": [...] }
+#   - Peran pengguna: admin, publikasi (umkm dihapus, dikelola admin desa)
+# ============================================================
+openapi: 3.0.3
+info:
+  title: API Desa Citapen
+  description: |
+    Layanan web profil Desa Citapen dan katalog produk UMKM.
+    Seluruh pesan tanggapan memakai Bahasa Indonesia.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Server pengembangan lokal
+  - url: https://backend-desa-citapen.onrender.com/api
+    description: Server produksi (Render)
+tags:
+  - name: Autentikasi
+    description: Masuk dan pengelolaan akun diri sendiri.
+  - name: Berita
+    description: Berita desa; menulis hanya untuk admin desa dan publikasi.
+  - name: Produk
+    description: Katalog produk UMKM; dikelola penuh oleh admin desa (full akses CRUD).
+  - name: Kategori
+    description: Kategori produk; dikelola penuh oleh admin desa.
+  - name: ProfilDesa
+    description: Profil desa (letak geografis & wilayah, struktur organisasi, riwayat kuwu); edit hanya admin desa.
+  - name: Pengguna
+    description: Manajemen pengguna khusus admin desa.
+  - name: Publik
+    description: Informasi umum dan kesehatan layanan.
+paths:
+  /:
+    get:
+      tags: [Publik]
+      summary: Informasi dasar layanan
+      responses:
+        "200":
+          description: Informasi dasar berhasil diambil.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: sukses
+                  pesan:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      nama:
+                        type: string
+                        example: backend-desa-citapen
+                      deskripsi:
+                        type: string
+  /kesehatan:
+    get:
+      tags: [Publik]
+      summary: Pemeriksaan kesehatan server dan database
+      description: |
+        Dipakai frontend untuk memeriksa kesiapan layanan sekaligus
+        membangunkan server dan database yang tertidur (Render/Supabase).
+        Sebaiknya dipanggil saat aplikasi dimuat pertama kali.
+      responses:
+        "200":
+          description: Layanan sehat dan database terhubung.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DataKesehatan"
+        "503":
+          description: Layanan berjalan tetapi database belum terhubung.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /beranda:
+    get:
+      tags: [Publik]
+      summary: Data halaman beranda untuk publik
+      description: |
+        Menyediakan berita dan produk terbaru (maksimal 5) beserta
+        jumlah keseluruhan. Satu panggilan cukup untuk halaman utama.
+      responses:
+        "200":
+          description: Data beranda berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DataBeranda"
+  /autentikasi/masuk:
+    post:
+      tags: [Autentikasi]
+      summary: Masuk (login)
+      description: |
+        Memvalidasi username dan kata sandi lalu mengembalikan token JWT.
+        Token wajib dikirim pada header Authorization untuk rute berizin.
+        Endpoint ini dilindungi pembatas laju anti serangan tebak sandi.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, kataSandi]
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  example: admin
+                kataSandi:
+                  type: string
+                  minLength: 8
+                  maxLength: 100
+                  example: AdminDesa123
+      responses:
+        "200":
+          description: Masuk berhasil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/HasilMasuk"
+        "401":
+          description: Username atau kata sandi salah, atau akun dinonaktifkan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /autentikasi/saya:
+    get:
+      tags: [Autentikasi]
+      summary: Ambil profil diri sendiri
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Profil berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Pengguna"
+        "401":
+          description: Token tidak ada atau tidak sah.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /autentikasi/profil:
+    put:
+      tags: [Autentikasi]
+      summary: Ubah data profil diri sendiri
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [namaLengkap]
+              properties:
+                namaLengkap:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                  example: Toko Berkah Jaya
+                email:
+                  type: [string, "null"]
+                  format: email
+                  maxLength: 100
+                  example: toko@contoh.com
+                nomorHp:
+                  type: [string, "null"]
+                  maxLength: 20
+                  example: "081234567890"
+      responses:
+        "200":
+          description: Profil berhasil diperbarui.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Pengguna"
+        "400":
+          description: Data tidak valid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /autentikasi/foto-profil:
+    put:
+      tags: [Autentikasi]
+      summary: Unggah atau ubah foto profil
+      description: |
+        Kirim berkas sebagai multipart/form-data dengan kolom bernama foto.
+        Ukuran maksimal 5 megabyte, jenis jpg, jpeg, atau png.
+        Gambar dikompresi otomatis oleh server.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [foto]
+              properties:
+                foto:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Foto profil berhasil diperbarui.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Pengguna"
+        "400":
+          description: Berkas tidak sesuai ketentuan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /autentikasi/kata-sandi:
+    put:
+      tags: [Autentikasi]
+      summary: Ganti kata sandi diri sendiri
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kataSandiLama, kataSandiBaru]
+              properties:
+                kataSandiLama:
+                  type: string
+                  example: AdminDesa123
+                kataSandiBaru:
+                  type: string
+                  minLength: 8
+                  maxLength: 100
+                  example: AdminDesaBaru456
+      responses:
+        "200":
+          description: Kata sandi berhasil diubah.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanSukses"
+        "400":
+          description: Kata sandi baru sama dengan kata sandi lama.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "401":
+          description: Kata sandi lama salah.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /autentikasi/username:
+    put:
+      tags: [Autentikasi]
+      summary: Ganti username diri sendiri
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [usernameBaru]
+              properties:
+                usernameBaru:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  pattern: "^[a-zA-Z0-9_.]+$"
+                  example: toko_berkah
+      responses:
+        "200":
+          description: Username berhasil diubah.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Pengguna"
+        "409":
+          description: Username sudah dipakai pengguna lain.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /berita:
+    get:
+      tags: [Berita]
+      summary: Daftar berita untuk publik
+      description: Diurutkan dari yang terbaru, dengan paginasi.
+      parameters:
+        - $ref: "#/components/parameters/Halaman"
+        - $ref: "#/components/parameters/PerHalaman"
+      responses:
+        "200":
+          description: Daftar berita berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/HasilPaginasiBerita"
+    post:
+      tags: [Berita]
+      summary: Terbitkan berita baru
+      description: |
+        Hanya admin desa dan publikasi. Kirim multipart/form-data;
+        gambar bersifat opsional.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [judul, isi]
+              properties:
+                judul:
+                  type: string
+                  minLength: 5
+                  maxLength: 200
+                isi:
+                  type: string
+                  minLength: 20
+                gambar:
+                  type: string
+                  format: binary
+                  description: Opsional, maksimal 5 MB, jpg/jpeg/png.
+      responses:
+        "201":
+          description: Berita berhasil diterbitkan.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Berita"
+        "400":
+          description: Data tidak valid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "401":
+          description: Belum masuk.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "403":
+          description: Peran tidak diizinkan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /berita/{id}:
+    get:
+      tags: [Berita]
+      summary: Detail satu berita untuk publik
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Detail berita berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Berita"
+        "404":
+          description: Berita tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+    put:
+      tags: [Berita]
+      summary: Ubah berita
+      description: |
+        Hanya penulis berita atau admin desa. Gambar baru opsional;
+        tanpa gambar maka gambar lama dipertahankan.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [judul, isi]
+              properties:
+                judul:
+                  type: string
+                  minLength: 5
+                  maxLength: 200
+                isi:
+                  type: string
+                  minLength: 20
+                gambar:
+                  type: string
+                  format: binary
+                  description: Opsional, maksimal 5 MB, jpg/jpeg/png.
+      responses:
+        "200":
+          description: Berita berhasil diperbarui.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Berita"
+        "403":
+          description: Bukan penulis berita atau bukan admin desa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "404":
+          description: Berita tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+    delete:
+      tags: [Berita]
+      summary: Hapus berita
+      description: Hanya penulis berita atau admin desa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Berita berhasil dihapus.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanSukses"
+        "403":
+          description: Bukan penulis berita atau bukan admin desa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "404":
+          description: Berita tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /produk:
+    get:
+      tags: [Produk]
+      summary: Daftar produk untuk publik
+      description: Diurutkan dari yang terbaru, dengan paginasi dan penyaring.
+      parameters:
+        - $ref: "#/components/parameters/Halaman"
+        - $ref: "#/components/parameters/PerHalaman"
+        - name: kategoriId
+          in: query
+          description: Tampilkan hanya produk dari kategori ini.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: pemilikId
+          in: query
+          description: Tampilkan hanya produk dari pemilik (admin desa) ini.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Daftar produk berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/HasilPaginasiProduk"
+    post:
+      tags: [Produk]
+      summary: Tambah produk baru
+      description: |
+        Hanya peran admin (full akses UMKM). Kirim multipart/form-data;
+        foto dan kategori bersifat opsional.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [nama, harga, deskripsi]
+              properties:
+                nama:
+                  type: string
+                  minLength: 2
+                  maxLength: 150
+                harga:
+                  type: number
+                  minimum: 0
+                  description: Boleh dikirim sebagai teks (contoh "15000").
+                deskripsi:
+                  type: string
+                  minLength: 10
+                kategoriId:
+                  type: integer
+                  minimum: 1
+                  description: Opsional, id kategori.
+                foto:
+                  type: string
+                  format: binary
+                  description: Opsional, maksimal 5 MB, jpg/jpeg/png.
+      responses:
+        "201":
+          description: Produk berhasil ditambahkan.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Produk"
+        "400":
+          description: Data tidak valid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "401":
+          description: Belum masuk.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "403":
+          description: Bukan peran admin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /produk/{id}:
+    get:
+      tags: [Produk]
+      summary: Detail satu produk untuk publik
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Detail produk berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Produk"
+        "404":
+          description: Produk tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+    put:
+      tags: [Produk]
+      summary: Ubah produk
+      description: |
+        Hanya admin desa. Foto baru opsional; tanpa foto maka
+        foto lama dipertahankan.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [nama, harga, deskripsi]
+              properties:
+                nama:
+                  type: string
+                  minLength: 2
+                  maxLength: 150
+                harga:
+                  type: number
+                  minimum: 0
+                deskripsi:
+                  type: string
+                  minLength: 10
+                kategoriId:
+                  type: integer
+                  minimum: 1
+                  description: Opsional; kirim kosong untuk menghapus kategori.
+                foto:
+                  type: string
+                  format: binary
+                  description: Opsional, maksimal 5 MB, jpg/jpeg/png.
+      responses:
+        "200":
+          description: Produk berhasil diperbarui.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Produk"
+        "403":
+          description: Bukan pemilik produk.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "404":
+          description: Produk tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+    delete:
+      tags: [Produk]
+      summary: Hapus produk
+      description: Hanya admin desa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Produk berhasil dihapus.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanSukses"
+        "403":
+          description: Bukan pemilik produk.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "404":
+          description: Produk tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /kategori:
+    get:
+      tags: [Kategori]
+      summary: Daftar kategori produk untuk publik
+      description: Diurutkan dari yang terbaru, maksimal 200 baris.
+      responses:
+        "200":
+          description: Daftar kategori berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Kategori"
+    post:
+      tags: [Kategori]
+      summary: Tambah kategori produk
+      description: Hanya peran admin; kategori dikelola admin desa.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nama]
+              properties:
+                nama:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  example: Makanan Ringan
+      responses:
+        "201":
+          description: Kategori berhasil dibuat.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Kategori"
+        "401":
+          description: Belum masuk.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "403":
+          description: Bukan peran admin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /kategori/{id}:
+    delete:
+      tags: [Kategori]
+      summary: Hapus kategori
+      description: Hanya admin desa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Kategori berhasil dihapus.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanSukses"
+        "403":
+          description: Bukan pemilik kategori.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "404":
+          description: Kategori tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /admin/pengguna:
+    get:
+      tags: [Pengguna]
+      summary: Daftar pengguna
+      description: Khusus admin desa, dengan paginasi dan penyaring peran.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Halaman"
+        - $ref: "#/components/parameters/PerHalaman"
+        - name: peran
+          in: query
+          description: Saring berdasarkan peran.
+          required: false
+          schema:
+            type: string
+            enum: [publikasi]
+      responses:
+        "200":
+          description: Daftar pengguna berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/HasilPaginasiPengguna"
+        "401":
+          description: Belum masuk.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "403":
+          description: Bukan admin desa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+    post:
+      tags: [Pengguna]
+      summary: Daftarkan pengguna baru
+      description: |
+        Khusus admin desa. Hanya peran publikasi yang
+        boleh didaftarkan; peran admin tidak tersedia lewat sini.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, kataSandi, namaLengkap, peran]
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  pattern: "^[a-zA-Z0-9_.]+$"
+                  example: toko_berkah
+                kataSandi:
+                  type: string
+                  minLength: 8
+                  maxLength: 100
+                  example: Rahasia123
+                namaLengkap:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                  example: Toko Berkah Jaya
+                email:
+                  type: [string, "null"]
+                  format: email
+                  maxLength: 100
+                nomorHp:
+                  type: [string, "null"]
+                  maxLength: 20
+                peran:
+                  type: string
+                  enum: [publikasi]
+      responses:
+        "201":
+          description: Pengguna berhasil didaftarkan.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Pengguna"
+        "409":
+          description: Username sudah dipakai.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /profil-desa:
+    get:
+      tags: [ProfilDesa]
+      summary: Ambil profil desa untuk publik
+      description: Letak geografis & wilayah desa Citapen.
+      responses:
+        "200":
+          description: Profil desa berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ProfilDesa"
+    put:
+      tags: [ProfilDesa]
+      summary: Ubah profil desa
+      description: Hanya admin desa yang boleh mengubah letak geografis & wilayah.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfilDesaInput"
+      responses:
+        "200":
+          description: Profil desa berhasil diperbarui.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ProfilDesa"
+        "401":
+          description: Belum masuk.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "403":
+          description: Bukan admin desa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /struktur-organisasi:
+    get:
+      tags: [ProfilDesa]
+      summary: Daftar struktur organisasi untuk publik
+      responses:
+        "200":
+          description: Daftar struktur organisasi berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/StrukturOrganisasi"
+    post:
+      tags: [ProfilDesa]
+      summary: Tambah anggota struktur organisasi
+      description: Hanya admin desa.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StrukturOrganisasiInput"
+      responses:
+        "201":
+          description: Struktur organisasi berhasil dibuat.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/StrukturOrganisasi"
+        "403":
+          description: Bukan admin desa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /struktur-organisasi/{id}:
+    get:
+      tags: [ProfilDesa]
+      summary: Detail struktur organisasi untuk publik
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Detail struktur organisasi berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/StrukturOrganisasi"
+        "404":
+          description: Struktur organisasi tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+    put:
+      tags: [ProfilDesa]
+      summary: Ubah struktur organisasi
+      description: Hanya admin desa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StrukturOrganisasiInput"
+      responses:
+        "200":
+          description: Struktur organisasi berhasil diperbarui.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/StrukturOrganisasi"
+        "403":
+          description: Bukan admin desa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "404":
+          description: Struktur organisasi tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+    delete:
+      tags: [ProfilDesa]
+      summary: Hapus struktur organisasi
+      description: Hanya admin desa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Struktur organisasi berhasil dihapus.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanSukses"
+        "403":
+          description: Bukan admin desa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "404":
+          description: Struktur organisasi tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /riwayat-kuwu:
+    get:
+      tags: [ProfilDesa]
+      summary: Daftar riwayat kuwu untuk publik
+      responses:
+        "200":
+          description: Daftar riwayat kuwu berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/RiwayatKuwu"
+    post:
+      tags: [ProfilDesa]
+      summary: Tambah riwayat kuwu
+      description: Hanya admin desa.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RiwayatKuwuInput"
+      responses:
+        "201":
+          description: Riwayat kuwu berhasil dibuat.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RiwayatKuwu"
+        "403":
+          description: Bukan admin desa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /riwayat-kuwu/{id}:
+    get:
+      tags: [ProfilDesa]
+      summary: Detail riwayat kuwu untuk publik
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Detail riwayat kuwu berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RiwayatKuwu"
+        "404":
+          description: Riwayat kuwu tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+    put:
+      tags: [ProfilDesa]
+      summary: Ubah riwayat kuwu
+      description: Hanya admin desa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RiwayatKuwuInput"
+      responses:
+        "200":
+          description: Riwayat kuwu berhasil diperbarui.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RiwayatKuwu"
+        "403":
+          description: Bukan admin desa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "404":
+          description: Riwayat kuwu tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+    delete:
+      tags: [ProfilDesa]
+      summary: Hapus riwayat kuwu
+      description: Hanya admin desa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Riwayat kuwu berhasil dihapus.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanSukses"
+        "403":
+          description: Bukan admin desa.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "404":
+          description: Riwayat kuwu tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /admin/pengguna/{id}:
+    get:
+      tags: [Pengguna]
+      summary: Detail pengguna
+      description: Khusus admin desa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Detail pengguna berhasil diambil.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Pengguna"
+        "404":
+          description: Pengguna tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+    delete:
+      tags: [Pengguna]
+      summary: Hapus pengguna
+      description: Khusus admin desa. Data terkait (produk, berita) ikut terhapus.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Pengguna berhasil dihapus.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanSukses"
+        "404":
+          description: Pengguna tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /admin/pengguna/{id}/kata-sandi:
+    put:
+      tags: [Pengguna]
+      summary: Ganti kata sandi pengguna lain
+      description: Khusus admin desa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kataSandiBaru]
+              properties:
+                kataSandiBaru:
+                  type: string
+                  minLength: 8
+                  maxLength: 100
+      responses:
+        "200":
+          description: Kata sandi pengguna berhasil diubah.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanSukses"
+        "404":
+          description: Pengguna tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+  /admin/pengguna/{id}/username:
+    put:
+      tags: [Pengguna]
+      summary: Ganti username pengguna lain
+      description: Khusus admin desa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [usernameBaru]
+              properties:
+                usernameBaru:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  pattern: "^[a-zA-Z0-9_.]+$"
+      responses:
+        "200":
+          description: Username pengguna berhasil diubah.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/TanggapanSukses"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Pengguna"
+        "404":
+          description: Pengguna tidak ditemukan.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+        "409":
+          description: Username sudah dipakai.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TanggapanGagal"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT yang diperoleh dari /autentikasi/masuk.
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: Id data (angka positif).
+      schema:
+        type: integer
+        minimum: 1
+    Halaman:
+      name: halaman
+      in: query
+      description: Nomor halaman, dimulai dari 1 (default 1).
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PerHalaman:
+      name: perHalaman
+      in: query
+      description: Jumlah data per halaman, 1 sampai 50 (default 10).
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+  schemas:
+    TanggapanSukses:
+      type: object
+      description: Bentuk dasar semua tanggapan sukses.
+      properties:
+        status:
+          type: string
+          example: sukses
+        pesan:
+          type: string
+          description: Pesan ramah untuk pengguna.
+        data:
+          description: Isi tanggapan, berbeda untuk setiap endpoint.
+    TanggapanGagal:
+      type: object
+      description: Bentuk dasar semua tanggapan gagal.
+      properties:
+        status:
+          type: string
+          example: gagal
+        pesan:
+          type: string
+          description: Penjelasan kesalahan dalam Bahasa Indonesia.
+        kode:
+          type: string
+          description: Kode kesalahan singkat untuk penanganan terprogram.
+          examples: [DATA_TIDAK_VALID, BELUM_MASUK, TANPA_IZIN]
+        detail:
+          type: array
+          items:
+            type: string
+          description: Daftar rincian kesalahan (untuk validasi).
+    DataKesehatan:
+      type: object
+      properties:
+        layanan:
+          type: string
+          example: backend-desa-citapen
+        database:
+          type: string
+          enum: [terhubung, tidak terhubung]
+        waktu:
+          type: string
+          format: date-time
+    DataBeranda:
+      type: object
+      properties:
+        beritaTerbaru:
+          type: array
+          items:
+            $ref: "#/components/schemas/Berita"
+        produkTerbaru:
+          type: array
+          items:
+            $ref: "#/components/schemas/Produk"
+        jumlahBerita:
+          type: integer
+        jumlahProduk:
+          type: integer
+        jumlahUmkm:
+          type: integer
+        kesehatanDatabase:
+          type: boolean
+    HasilMasuk:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Token JWT; kirim pada header Authorization untuk rute berizin.
+        pengguna:
+          $ref: "#/components/schemas/Pengguna"
+    Pengguna:
+      type: object
+      description: Data pengguna tanpa kata sandi.
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        namaLengkap:
+          type: string
+        email:
+          type: [string, "null"]
+        nomorHp:
+          type: [string, "null"]
+        fotoProfil:
+          type: [string, "null"]
+          description: Path relatif gambar; lihat catatan URL gambar.
+        peran:
+          type: string
+          enum: [admin, publikasi]
+        statusAktif:
+          type: boolean
+        dibuatPada:
+          type: string
+          format: date-time
+    ProfilDesa:
+      type: object
+      properties:
+        id:
+          type: integer
+        luasWilayah:
+          type: string
+        batasUtara:
+          type: string
+        batasSelatan:
+          type: string
+        batasBarat:
+          type: string
+        batasTimur:
+          type: string
+        letakGeografis:
+          type: [string, "null"]
+        deskripsiWilayah:
+          type: [string, "null"]
+        diperbaruiPada:
+          type: string
+          format: date-time
+    ProfilDesaInput:
+      type: object
+      required: [luasWilayah, batasUtara, batasSelatan, batasBarat, batasTimur]
+      properties:
+        luasWilayah:
+          type: string
+          maxLength: 100
+        batasUtara:
+          type: string
+          maxLength: 100
+        batasSelatan:
+          type: string
+          maxLength: 100
+        batasBarat:
+          type: string
+          maxLength: 100
+        batasTimur:
+          type: string
+          maxLength: 100
+        letakGeografis:
+          type: [string, "null"]
+          maxLength: 2000
+        deskripsiWilayah:
+          type: [string, "null"]
+          maxLength: 2000
+    StrukturOrganisasi:
+      type: object
+      properties:
+        id:
+          type: integer
+        nama:
+          type: string
+        jabatan:
+          type: string
+        urutan:
+          type: integer
+        foto:
+          type: [string, "null"]
+        dibuatPada:
+          type: string
+          format: date-time
+        diperbaruiPada:
+          type: string
+          format: date-time
+    StrukturOrganisasiInput:
+      type: object
+      required: [nama, jabatan]
+      properties:
+        nama:
+          type: string
+          minLength: 2
+          maxLength: 100
+        jabatan:
+          type: string
+          minLength: 2
+          maxLength: 100
+        urutan:
+          type: integer
+          minimum: 0
+          maximum: 1000
+    RiwayatKuwu:
+      type: object
+      properties:
+        id:
+          type: integer
+        nama:
+          type: string
+        masaJabatan:
+          type: string
+        urutan:
+          type: integer
+        keterangan:
+          type: [string, "null"]
+        dibuatPada:
+          type: string
+          format: date-time
+        diperbaruiPada:
+          type: string
+          format: date-time
+    RiwayatKuwuInput:
+      type: object
+      required: [nama, masaJabatan]
+      properties:
+        nama:
+          type: string
+          minLength: 2
+          maxLength: 100
+        masaJabatan:
+          type: string
+          minLength: 2
+          maxLength: 100
+        urutan:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        keterangan:
+          type: [string, "null"]
+          maxLength: 500
+    Penulis:
+      type: object
+      description: Informasi penulis atau pemilik yang tampil di berita dan produk.
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        namaLengkap:
+          type: string
+        fotoProfil:
+          type: [string, "null"]
+    Berita:
+      type: object
+      properties:
+        id:
+          type: integer
+        judul:
+          type: string
+        isi:
+          type: string
+        gambar:
+          type: [string, "null"]
+          description: Path relatif gambar; lihat catatan URL gambar.
+        penulis:
+          $ref: "#/components/schemas/Penulis"
+        dibuatPada:
+          type: string
+          format: date-time
+        diperbaruiPada:
+          type: string
+          format: date-time
+    HasilPaginasiBerita:
+      type: object
+      properties:
+        daftar:
+          type: array
+          items:
+            $ref: "#/components/schemas/Berita"
+        halaman:
+          type: integer
+        perHalaman:
+          type: integer
+        total:
+          type: integer
+        totalHalaman:
+          type: integer
+    Kategori:
+      type: object
+      properties:
+        id:
+          type: integer
+        nama:
+          type: string
+        pemilikId:
+          type: integer
+          description: Id admin desa pemilik kategori.
+        dibuatPada:
+          type: string
+          format: date-time
+    Produk:
+      type: object
+      properties:
+        id:
+          type: integer
+        nama:
+          type: string
+        harga:
+          type: number
+          description: Harga dalam rupiah (bisa sangat besar, gunakan bigint jika perlu).
+        deskripsi:
+          type: string
+        foto:
+          type: [string, "null"]
+          description: Path relatif gambar; lihat catatan URL gambar.
+        kategori:
+          type: [object, "null"]
+          properties:
+            id:
+              type: integer
+            nama:
+              type: string
+        pemilik:
+          $ref: "#/components/schemas/Penulis"
+        dibuatPada:
+          type: string
+          format: date-time
+        diperbaruiPada:
+          type: string
+          format: date-time
+    HasilPaginasiProduk:
+      type: object
+      properties:
+        daftar:
+          type: array
+          items:
+            $ref: "#/components/schemas/Produk"
+        halaman:
+          type: integer
+        perHalaman:
+          type: integer
+        total:
+          type: integer
+        totalHalaman:
+          type: integer
+    HasilPaginasiPengguna:
+      type: object
+      properties:
+        daftar:
+          type: array
+          items:
+            $ref: "#/components/schemas/Pengguna"
+        halaman:
+          type: integer
+        perHalaman:
+          type: integer
+        total:
+          type: integer
+        totalHalaman:
+          type: integer

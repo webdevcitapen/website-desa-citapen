@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { AlertCircle, HelpCircle, LogOut, Info } from 'lucide-react';
 
 interface ConfirmModalProps {
@@ -23,6 +24,18 @@ export default function ConfirmModal({
   type = 'danger',
   isLoading = false
 }: ConfirmModalProps) {
+  const tombolBatalRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    tombolBatalRef.current?.focus();
+    const tanganiEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isLoading) onClose();
+    };
+    document.addEventListener('keydown', tanganiEscape);
+    return () => document.removeEventListener('keydown', tanganiEscape);
+  }, [isOpen, isLoading, onClose]);
+
   if (!isOpen) return null;
 
   // Render icon based on type
@@ -71,18 +84,19 @@ export default function ConfirmModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 z-[999] flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 bg-slate-900/40 z-[999] flex items-center justify-center p-4 backdrop-blur-sm" role="presentation">
+      <div className="bg-white rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200" role="dialog" aria-modal="true" aria-labelledby="dialog-judul" aria-describedby="dialog-pesan">
         
         {renderIcon()}
         
-        <h3 className="text-xl font-bold text-center text-slate-800 mb-2">{title}</h3>
-        <p className="text-slate-500 text-center text-sm mb-6 leading-relaxed whitespace-pre-wrap">
+        <h3 id="dialog-judul" className="text-xl font-bold text-center text-slate-800 mb-2">{title}</h3>
+        <p id="dialog-pesan" className="text-slate-500 text-center text-sm mb-6 leading-relaxed whitespace-pre-wrap">
           {message}
         </p>
         
         <div className="flex gap-3">
           <button 
+            ref={tombolBatalRef}
             onClick={onClose}
             disabled={isLoading}
             className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 text-sm hover:bg-slate-50 transition-colors disabled:opacity-50"

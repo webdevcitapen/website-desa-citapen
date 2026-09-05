@@ -255,6 +255,28 @@ export default function ProfilAdmin() {
   // Handler Galeri
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] || null;
+    if (f) {
+      const formatDiizinkan = [
+        'image/jpeg',
+        'image/png',
+        'image/jpg',
+        'image/heic',
+        'image/heif',
+        'image/heif-sequence',
+        'image/heic-sequence',
+        'image/webp',
+      ];
+      if (!formatDiizinkan.includes(f.type.toLowerCase())) {
+        setError('Format foto galeri harus JPG, JPEG, PNG, HEIC, HEIF, atau WEBP.');
+        return;
+      }
+      if (f.size > 5 * 1024 * 1024) {
+        setError('Ukuran foto galeri maksimal 5MB sesuai batas backend.');
+        return;
+      }
+    }
+
+    setError(null);
     setFileGaleri(f);
     if (f) {
       const url = URL.createObjectURL(f);
@@ -277,7 +299,7 @@ export default function ProfilAdmin() {
       if (formGaleri.judul) fd.append('judul', formGaleri.judul);
       if (formGaleri.keterangan) fd.append('keterangan', formGaleri.keterangan);
       fd.append('urutan', String(formGaleri.urutan));
-      await api.post('/galeri', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.post('/galeri', fd);
       setFormGaleri({ judul: '', keterangan: '', urutan: 0 });
       setFileGaleri(null);
       setPreviewGaleri(null);

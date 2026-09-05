@@ -84,13 +84,13 @@ export default function FormProduk() {
     const file = e.target.files?.[0];
     setError(null);
     if (file) {
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/svg+xml', 'image/gif'];
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
       if (!validTypes.includes(file.type)) {
-        setError('Format gambar harus JPG, PNG, GIF atau SVG.');
+        setError('Format gambar harus JPG, JPEG, PNG, atau WEBP.');
         return;
       }
-      if (file.size > 10 * 1024 * 1024) {
-        setError('Ukuran gambar maksimal 10MB.');
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Ukuran gambar maksimal 5MB sesuai batas backend.');
         return;
       }
 
@@ -114,8 +114,8 @@ export default function FormProduk() {
     setError(null);
     setSuccess(null);
 
-    if (!nama || !harga || !deskripsi || !umkmId) {
-      setError('Nama, Harga, UMKM, dan Deskripsi produk wajib diisi.');
+    if (!nama || !harga || !deskripsi || !umkmId || !kategoriId) {
+      setError('Nama, Harga, UMKM, Kategori, dan Deskripsi produk wajib diisi.');
       return;
     }
     
@@ -132,21 +132,17 @@ export default function FormProduk() {
       formData.append('harga', harga);
       formData.append('deskripsi', deskripsi);
       formData.append('umkm_id', umkmId);
-      if (kategoriId) formData.append('kategori_id', kategoriId);
+      formData.append('kategori_id', kategoriId);
       
       if (gambar) {
         formData.append('foto', gambar);
       }
 
       if (isEditMode) {
-        await api.put(`/produk/${id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.put(`/produk/${id}`, formData);
         setSuccess('Produk berhasil diperbarui!');
       } else {
-        await api.post('/produk', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.post('/produk', formData);
         setSuccess('Produk baru berhasil ditambahkan!');
       }
       
@@ -251,7 +247,9 @@ export default function FormProduk() {
             </div>
 
             <div>
-              <label className="block text-[13px] font-extrabold text-slate-700 mb-2">Kategori</label>
+              <label className="block text-[13px] font-extrabold text-slate-700 mb-2">
+                Kategori <span className="text-red-500">*</span>
+              </label>
               <div className="relative">
                 <select 
                   value={kategoriId}
@@ -263,6 +261,7 @@ export default function FormProduk() {
                     backgroundPosition: 'right 1.25rem center',
                     backgroundSize: '1em'
                   }}
+                    required
                 >
                   <option value="">Pilih Kategori</option>
                   {kategoriList.map((k) => (
@@ -323,7 +322,7 @@ export default function FormProduk() {
                   <div className={`relative z-10 flex flex-col items-center justify-center ${isEditMode ? 'text-white' : 'opacity-0 group-hover:opacity-100 bg-black/50 absolute inset-0 text-white'}`}>
                     <Upload className="w-8 h-8 mb-3" />
                     <span className="font-bold text-[15px]">{isEditMode ? 'Klik untuk mengganti foto' : 'Ganti Gambar'}</span>
-                    {isEditMode && <span className="text-xs mt-2 opacity-80">PNG, JPG, SVG (Maks. 10MB)</span>}
+                    {isEditMode && <span className="text-xs mt-2 opacity-80">JPG, JPEG, PNG, WEBP (Maks. 5MB)</span>}
                   </div>
                 </>
               ) : (
@@ -333,7 +332,7 @@ export default function FormProduk() {
                     Klik untuk unggah atau seret dan lepas file
                   </p>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    SVG, PNG, JPG ATAU GIF (MAKS. 10MB)
+                    JPG, JPEG, PNG, WEBP (MAKS. 5MB)
                   </p>
                 </div>
               )}
@@ -342,7 +341,7 @@ export default function FormProduk() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".jpg,.jpeg,.png,.webp,.svg,.gif"
+              accept=".jpg,.jpeg,.png,.heic,.heif,.webp"
               className="hidden"
               onChange={handleImageChange}
             />

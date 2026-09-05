@@ -127,14 +127,31 @@ export default function ProfilPengguna() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const formatDiizinkan = [
+      'image/jpeg',
+      'image/png',
+      'image/jpg',
+      'image/heic',
+      'image/heif',
+      'image/heif-sequence',
+      'image/heic-sequence',
+      'image/webp',
+    ];
+    if (!formatDiizinkan.includes(file.type.toLowerCase())) {
+      showNotif('error', 'Format foto harus JPG, JPEG, PNG, HEIC, HEIF, atau WEBP.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showNotif('error', 'Ukuran foto maksimal 5MB sesuai batas backend.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('foto', file);
 
     try {
       setIsSaving(true);
-      const res = await api.put('/autentikasi/foto-profil', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const res = await api.put('/autentikasi/foto-profil', formData);
       showNotif('sukses', 'Foto profil berhasil diperbarui');
       // Update local state with new photo from response
       if (res.data?.data?.fotoProfil) {
@@ -202,7 +219,7 @@ export default function ProfilPengguna() {
                 type="file" 
                 ref={fileInputRef} 
                 onChange={handleUploadFoto} 
-                accept="image/jpeg,image/png,image/jpg" 
+                accept="image/jpeg,image/png,image/jpg,image/heic,image/heif,image/webp"
                 className="hidden" 
               />
             </div>
@@ -210,7 +227,7 @@ export default function ProfilPengguna() {
             <h2 className="text-xl font-bold text-slate-800">{profil.namaLengkap}</h2>
             <p className="text-slate-500 font-medium mb-4">@{profil.username}</p>
             <span className="inline-block bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-              {profil.peran === 'admin' ? 'Admin Desa' : profil.peran === 'publikasi' ? 'Publikasi' : profil.peran}
+              {profil.peran === 'admin' ? 'Admin' : profil.peran === 'publikasi' ? 'Publikasi' : profil.peran}
             </span>
           </div>
 

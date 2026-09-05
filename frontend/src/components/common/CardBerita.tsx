@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { getImageUrl } from '../../services/api';
+import { formatTanggal } from '../../utils/format';
 
 interface CardBeritaProps {
   id: number;
@@ -11,17 +12,16 @@ interface CardBeritaProps {
 }
 
 export default function CardBerita({ id, gambar, judul, ringkasan, tanggal }: CardBeritaProps) {
-  const dateObj = new Date(tanggal);
-  const tanggalFormat = `${dateObj.getDate()} ${dateObj.toLocaleString('id-ID', { month: 'short' })} ${dateObj.getFullYear()}`;
+  const tanggalFormat = formatTanggal(tanggal, { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] flex flex-col">
       <div className="relative h-48 overflow-hidden bg-slate-200">
         <img
-          src={gambar ? getImageUrl(gambar) : 'https://placehold.co/600x400'}
+          src={gambar ? getImageUrl(gambar) : '/placeholder.svg'}
           alt={judul}
           className="w-full h-full object-cover"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://placehold.co/600x400?text=Berita'; }}
+          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder.svg'; }}
         />
       </div>
       <div className="p-6 flex-grow flex flex-col">

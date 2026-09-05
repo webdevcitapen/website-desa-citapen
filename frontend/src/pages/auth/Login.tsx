@@ -42,7 +42,6 @@ export default function Login() {
           navigate('/admin/dashboard');
         }
       } else {
-        // Fallback jika format response tidak sesuai dugaan tapi berstatus 200 OK (misalnya mock backend)
         if (response.data && response.data.token) {
            const token = response.data.token;
            const pengguna = response.data.pengguna;
@@ -54,6 +53,8 @@ export default function Login() {
            } else {
              navigate('/admin/dashboard');
            }
+        } else {
+          setError('Respons login tidak valid. Silakan coba lagi atau hubungi administrator.');
         }
       }
     } catch (err: any) {

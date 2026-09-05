@@ -1,9 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  Upload, AlertCircle, CheckCircle2, 
-  Bold, Italic, Underline, List, ListOrdered 
-} from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
 import api, { getImageUrl } from '../../../services/api';
 
 export default function FormBerita() {
@@ -16,6 +13,7 @@ export default function FormBerita() {
   const [isi, setIsi] = useState('');
   const [gambar, setGambar] = useState<File | null>(null);
   const [gambarPreview, setGambarPreview] = useState<string | null>(null);
+  const [namaPenulis, setNamaPenulis] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(isEditMode);
@@ -23,14 +21,27 @@ export default function FormBerita() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchProfilPenulis = async () => {
+      try {
+        const response = await api.get('/autentikasi/saya');
+        const profil = response.data?.data || response.data;
+        setNamaPenulis(profil?.namaLengkap || '');
+      } catch {
+        setNamaPenulis('');
+      }
+    };
+
+    fetchProfilPenulis();
+
     if (isEditMode) {
       const fetchDetail = async () => {
         try {
           const response = await api.get(`/berita/${id}`);
-          if (response.data) {
-            setJudul(response.data.judul);
-            setIsi(response.data.isi);
-            setGambarPreview(getImageUrl(response.data.gambar));
+          const berita = response.data?.data || response.data;
+          if (berita) {
+            setJudul(berita.judul);
+            setIsi(berita.isi);
+            setGambarPreview(getImageUrl(berita.gambar));
           }
         } catch (err: any) {
           setError(err.response?.data?.pesan || 'Gagal memuat data berita.');
@@ -51,8 +62,8 @@ export default function FormBerita() {
         setError('Format gambar harus JPG, PNG, atau WEBP.');
         return;
       }
-      if (file.size > 10 * 1024 * 1024) {
-        setError('Ukuran gambar maksimal 10MB.');
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Ukuran gambar maksimal 5MB sesuai batas backend.');
         return;
       }
 
@@ -70,8 +81,8 @@ export default function FormBerita() {
     setError(null);
     setSuccess(null);
 
-    if (!judul || !isi) {
-      setError('Judul dan Isi berita wajib diisi.');
+    if (!judul.trim() || isi.trim().length < 20) {
+      setError('Judul wajib diisi dan isi berita minimal 20 karakter.');
       return;
     }
     if (!isEditMode && !gambar) {
@@ -89,14 +100,10 @@ export default function FormBerita() {
       }
 
       if (isEditMode) {
-        await api.put(`/berita/${id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.put(`/berita/${id}`, formData, { timeout: 30000 });
         setSuccess('Berita berhasil diperbarui!');
       } else {
-        await api.post('/berita', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.post('/berita', formData, { timeout: 30000 });
         setSuccess('Berita berhasil diterbitkan!');
       }
       
@@ -105,7 +112,11 @@ export default function FormBerita() {
       }, 1500);
       
     } catch (err: any) {
-      const pesan = err.response?.data?.pesan || 'Terjadi kesalahan saat menyimpan berita.';
+      const pesan = err.code === 'ECONNABORTED'
+        ? 'Permintaan terlalu lama. Periksa backend dan ukuran gambar, lalu coba lagi.'
+        : err.response?.data?.pesan
+          || (err.response?.status ? `Server menolak permintaan (${err.response.status}).` : null)
+          || 'Backend tidak dapat dihubungi. Pastikan server berjalan di port 3000.';
       const detail = err.response?.data?.detail;
       if (Array.isArray(detail) && detail.length > 0) {
         setError(`${pesan}: ${detail.join(', ')}`);
@@ -198,7 +209,7 @@ export default function FormBerita() {
               <input 
                 type="text" 
                 disabled 
-                value="Admin Desa" 
+                value={namaPenulis || 'Memuat nama penulis...'}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-sm font-medium cursor-not-allowed"
               />
             </div>
@@ -228,7 +239,7 @@ export default function FormBerita() {
                     Upload file <span className="font-normal">atau drag and drop</span>
                   </p>
                   <p className="text-xs font-medium text-slate-400">
-                    PNG, JPG, GIF up to 10MB (Rekomendasi 16:9)
+                    PNG, JPG, WEBP maksimal 5MB (Rekomendasi 16:9)
                   </p>
                 </>
               )}
@@ -237,7 +248,7 @@ export default function FormBerita() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".jpg,.jpeg,.png,.webp,.gif"
+              accept=".jpg,.jpeg,.png,.webp"
               className="hidden"
               onChange={handleImageChange}
             />
@@ -246,26 +257,18 @@ export default function FormBerita() {
           {/* Isi Berita */}
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">Isi Berita</label>
-            <div className="border border-slate-200 rounded-xl overflow-hidden focus-within:border-[#0A3D2D] focus-within:ring-1 focus-within:ring-[#0A3D2D] transition-all bg-white">
-              {/* Fake Toolbar */}
-              <div className="bg-[#F8FAFC] border-b border-slate-200 px-4 py-2.5 flex items-center gap-1">
-                <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded transition-colors"><Bold className="w-4 h-4" /></button>
-                <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded transition-colors"><Italic className="w-4 h-4" /></button>
-                <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded transition-colors"><Underline className="w-4 h-4" /></button>
-                <div className="w-px h-5 bg-slate-300 mx-2"></div>
-                <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded transition-colors"><List className="w-4 h-4" /></button>
-                <button type="button" className="p-1.5 text-slate-600 hover:bg-slate-200 rounded transition-colors"><ListOrdered className="w-4 h-4" /></button>
-              </div>
-              <textarea
-                rows={10}
-                value={isi}
-                onChange={(e) => setIsi(e.target.value)}
-                className="w-full px-4 py-4 outline-none text-sm font-medium text-slate-700 resize-y leading-relaxed"
-                placeholder="Tuliskan isi berita selengkapnya di sini..."
-                required
-                minLength={20}
-              />
-            </div>
+            <textarea
+              rows={10}
+              value={isi}
+              onChange={(e) => setIsi(e.target.value)}
+              className="w-full px-4 py-4 rounded-xl border border-slate-200 focus:border-[#0A3D2D] focus:ring-1 focus:ring-[#0A3D2D] outline-none text-sm font-medium text-slate-700 resize-y leading-relaxed"
+              placeholder="Tuliskan isi berita selengkapnya di sini..."
+              required
+              minLength={20}
+            />
+            <p className="mt-2 text-xs text-slate-400">
+              Isi berita hanya mendukung teks biasa.
+            </p>
           </div>
 
           <hr className="border-slate-100 my-8" />

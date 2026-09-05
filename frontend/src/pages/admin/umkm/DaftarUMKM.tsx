@@ -17,6 +17,7 @@ export default function DaftarUMKM() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchUmkm = async () => {
     try {
@@ -27,6 +28,7 @@ export default function DaftarUMKM() {
       }
     } catch (error) {
       console.error('Gagal mengambil data UMKM', error);
+      setError('Gagal mengambil data UMKM dari server.');
     } finally {
       setIsLoading(false);
     }
@@ -41,10 +43,10 @@ export default function DaftarUMKM() {
       setIsDeleting(true);
       await api.delete(`/umkm/${id}`);
       setDeleteConfirm(null);
-      fetchUmkm();
+      await fetchUmkm();
     } catch (error: any) {
       console.error('Gagal menghapus UMKM', error);
-      alert(error.response?.data?.pesan || 'Gagal menghapus UMKM.');
+      setError(error.response?.data?.pesan || 'Gagal menghapus UMKM.');
     } finally {
       setIsDeleting(false);
     }
@@ -73,6 +75,8 @@ export default function DaftarUMKM() {
           Tambah UMKM
         </Link>
       </div>
+
+      {error && <div role="alert" className="mb-6 rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-600">{error}</div>}
 
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1 max-w-xl">

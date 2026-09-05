@@ -5,6 +5,7 @@ import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BottomNav from '../../components/layout/BottomNav';
 import api, { getImageUrl } from '../../services/api';
+import { formatTanggal } from '../../utils/format';
 
 // Interface
 interface DetailBeritaData {
@@ -23,6 +24,7 @@ interface DetailBeritaData {
     const { id } = useParams<{ id: string }>();
     const [berita, setBerita] = useState<DetailBeritaData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
   
     useEffect(() => {
       const fetchDetail = async () => {
@@ -36,6 +38,7 @@ interface DetailBeritaData {
           }
         } catch (error) {
           console.error("Gagal memuat detail berita", error);
+          setError('Detail berita tidak dapat dimuat. Silakan coba lagi.');
         } finally {
           setIsLoading(false);
         }
@@ -71,7 +74,19 @@ interface DetailBeritaData {
     );
   }
 
-  if (!berita) return null;
+  if (!berita) {
+    return (
+      <div className="min-h-screen flex flex-col font-sans bg-[#FBFBFF]">
+        <Navbar />
+        <main className="flex-grow flex flex-col items-center justify-center gap-4 px-6 text-center">
+          <p role="alert" className="text-sm font-semibold text-red-600">{error || 'Berita tidak ditemukan.'}</p>
+          <button onClick={() => window.location.reload()} className="rounded-xl bg-[#0A3D2D] px-5 py-2.5 text-sm font-bold text-white">Coba lagi</button>
+        </main>
+        <Footer />
+        <BottomNav />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#FBFBFF] pb-20 md:pb-0">
@@ -91,7 +106,7 @@ interface DetailBeritaData {
                 </span>
                 <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium">
                   <Calendar className="w-3.5 h-3.5" />
-                  {new Date(berita.dibuatPada).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {formatTanggal(berita.dibuatPada)}
                 </div>
               </div>
 
@@ -105,7 +120,7 @@ interface DetailBeritaData {
                   {(berita.penulis?.namaLengkap || "A")[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-800">{berita.penulis?.namaLengkap || "Admin Desa"}</p>
+                  <p className="text-sm font-bold text-slate-800">{berita.penulis?.namaLengkap || "Admin"}</p>
                   <p className="text-xs text-slate-500">Pemerintah Desa Citapen</p>
                 </div>
               </div>

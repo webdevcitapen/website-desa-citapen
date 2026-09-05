@@ -63,14 +63,10 @@ export default function FormUMKM() {
       if (deskripsi) formData.append('deskripsi', deskripsi);
 
       if (isEditMode) {
-        await api.put(`/umkm/${id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.put(`/umkm/${id}`, formData);
         setSuccess('Data UMKM berhasil diperbarui!');
       } else {
-        await api.post('/umkm', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.post('/umkm', formData);
         setSuccess('UMKM baru berhasil ditambahkan!');
       }
       

@@ -5,6 +5,7 @@ import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BottomNav from '../../components/layout/BottomNav';
 import api, { getImageUrl } from '../../services/api';
+import { formatTanggal } from '../../utils/format';
 
 // Interface for Berita
 export interface BeritaItem {
@@ -245,7 +246,7 @@ export default function Berita() {
                       <div className="p-5 flex flex-col flex-grow">
                         <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2">
                           <Calendar className="w-3.5 h-3.5" />
-                          {new Date(item.dibuatPada || item.dibuat_pada || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          {formatTanggal(item.dibuatPada || item.dibuat_pada)}
                         </div>
                         <h3 className="text-base font-bold text-slate-800 mb-2 line-clamp-2 leading-tight">
                           {item.judul}
@@ -281,7 +282,7 @@ export default function Berita() {
                         <div className="p-5 flex flex-col flex-grow">
                           <div className="flex items-center gap-2 text-slate-400 text-xs font-medium mb-2">
                             <Calendar className="w-3.5 h-3.5" />
-                            {new Date(item.dibuatPada || item.dibuat_pada || Date.now()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            {formatTanggal(item.dibuatPada || item.dibuat_pada, { day: 'numeric', month: 'short', year: 'numeric' })}
                             {item.kategori && <span className="ml-2 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold">{item.kategori}</span>}
                           </div>
                           <h3 className="text-base font-bold text-slate-800 mb-2 line-clamp-1">

@@ -84,9 +84,9 @@ export default function DaftarBerita() {
     try {
       await api.delete(`/berita/${id}`);
       setDeleteConfirm(null);
-      fetchBerita();
+      await fetchBerita();
     } catch (err: any) {
-      alert(err.response?.data?.pesan || 'Gagal menghapus berita.');
+      setError(err.response?.data?.pesan || 'Gagal menghapus berita.');
     }
   };
 
@@ -121,7 +121,7 @@ export default function DaftarBerita() {
   const getPenulisNama = (item: BeritaItem) => {
     if (item.penulis?.namaLengkap) return item.penulis.namaLengkap;
     if (item.penulis_nama) return item.penulis_nama;
-    return 'Admin Desa';
+    return 'Admin';
   };
 
   const getTanggal = (item: BeritaItem) => {

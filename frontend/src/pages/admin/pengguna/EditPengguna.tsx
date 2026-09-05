@@ -38,7 +38,7 @@ export default function EditPengguna() {
             kataSandi: '' // Kosongkan kata sandi, hanya diisi jika ingin diganti
           });
         }
-      } catch (err) {
+      } catch {
         setErrorMsg('Gagal mengambil data pengguna.');
       } finally {
         setIsLoadingData(false);
@@ -120,13 +120,12 @@ export default function EditPengguna() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <img src="/images/logo-kuningan.png" alt="Logo" className="w-8 h-8 object-contain" />
+          <div className="mb-1">
             <h1 className="text-2xl font-extrabold text-[#0A3D2D]">
               Edit Akun
             </h1>
           </div>
-          <p className="text-sm font-medium text-slate-500 ml-11">
+          <p className="text-sm font-medium text-slate-500">
             Perbarui informasi kredensial akses untuk staf atau warga.
           </p>
         </div>
@@ -227,7 +226,7 @@ export default function EditPengguna() {
             >
               <option value="" disabled>Pilih peran pengguna</option>
               <option value="publikasi">Publikasi</option>
-              <option value="admin">Administrator Desa</option>
+              <option value="admin">Admin</option>
             </select>
           </div>
 

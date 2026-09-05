@@ -19,6 +19,7 @@ export default function DaftarPengguna() {
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPengguna = async () => {
     try {
@@ -31,6 +32,7 @@ export default function DaftarPengguna() {
       }
     } catch (error) {
       console.error('Gagal mengambil data pengguna', error);
+      setError('Gagal mengambil data pengguna dari server.');
     } finally {
       setIsLoading(false);
     }
@@ -59,10 +61,10 @@ export default function DaftarPengguna() {
       setIsDeleting(true);
       await api.delete(`/admin/pengguna/${id}`);
       setDeleteConfirm(null);
-      fetchPengguna();
+      await fetchPengguna();
     } catch (error: any) {
       console.error('Gagal menghapus pengguna', error);
-      alert(error.response?.data?.pesan || 'Gagal menghapus pengguna.');
+      setError(error.response?.data?.pesan || 'Gagal menghapus pengguna.');
     } finally {
       setIsDeleting(false);
     }
@@ -99,6 +101,7 @@ export default function DaftarPengguna() {
 
   return (
     <div className="max-w-6xl mx-auto pb-12">
+      {error && <div role="alert" className="mb-6 rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-bold text-red-600">{error}</div>}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>

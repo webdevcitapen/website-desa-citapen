@@ -3,15 +3,17 @@ import { Link } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, AlertCircle } from 'lucide-react';
 import api, { getImageUrl } from '../../../services/api';
 import ConfirmModal from '../../../components/ui/ConfirmModal';
+import { formatHarga } from '../../../utils/format';
 
 interface ProdukItem {
   id: number;
   nama: string;
   harga: number | string | null;
   foto: string | null;
-  kategori?: any;
-  umkm?: any;
-  pemilik_nama?: string; // fallback for dummy data
+  kategori?: { id: number; nama: string } | null;
+  umkm?: { nama: string } | null;
+  pemilik_nama?: string;
+  status?: string;
 }
 
 export default function DaftarProduk() {
@@ -45,25 +47,12 @@ export default function DaftarProduk() {
       } else if (Array.isArray(response.data)) {
         setProdukList(response.data);
       } else {
-        // Fallback mock data jika API kosong untuk keperluan slicing UI
-        setProdukList([
-          { id: 1, nama: 'Keranjang Bambu Anyam', harga: 75000, kategori: 'Kerajinan', pemilik_nama: 'Kriya Bambu Lestari', foto: '/images/produk/keranjang.jpg' },
-          { id: 2, nama: 'Madu Hutan Organik', harga: 120000, kategori: 'Makanan', pemilik_nama: 'Kelompok Tani Mekar', foto: '/images/produk/madu.jpg' },
-          { id: 3, nama: 'Kopi Robusta Asli', harga: 45000, kategori: 'Pertanian', pemilik_nama: 'Koperasi Jaya Makmur', foto: '/images/produk/kopi.jpg' },
-        ]);
+        setProdukList([]);
       }
     } catch (err: any) {
       console.error('Gagal fetch produk', err);
-      // Jika API belum siap, gunakan dummy data untuk presentasi UI slicing
-      // Jangan tampilkan error jika backend belum siap, tetap tampilkan dummy agar halaman tidak blank
-      if (err.response?.data?.pesan) {
-        setError(err.response.data.pesan);
-      }
-      setProdukList([
-        { id: 1, nama: 'Keranjang Bambu Anyam', harga: 75000, kategori: 'Kerajinan', pemilik_nama: 'Kriya Bambu Lestari', foto: '/images/produk/keranjang.jpg' },
-        { id: 2, nama: 'Madu Hutan Organik', harga: 120000, kategori: 'Makanan', pemilik_nama: 'Kelompok Tani Mekar', foto: '/images/produk/madu.jpg' },
-        { id: 3, nama: 'Kopi Robusta Asli', harga: 45000, kategori: 'Pertanian', pemilik_nama: 'Koperasi Jaya Makmur', foto: '/images/produk/kopi.jpg' },
-      ]);
+      setError(err.response?.data?.pesan || 'Gagal memuat produk dari server.');
+      setProdukList([]);
     } finally {
       setIsLoading(false);
     }
@@ -73,11 +62,9 @@ export default function DaftarProduk() {
     try {
       await api.delete(`/produk/${id}`);
       setDeleteConfirm(null);
-      fetchProduk();
+      await fetchProduk();
     } catch (err: any) {
-      alert(err.response?.data?.pesan || 'Gagal menghapus produk.');
-      // Untuk simulasi slicing jika gagal API
-      setProdukList(produkList.filter(p => p.id !== id));
+      setError(err.response?.data?.pesan || 'Gagal menghapus produk.');
       setDeleteConfirm(null);
     }
   };
@@ -87,7 +74,10 @@ export default function DaftarProduk() {
     const namaLower = String(item.nama ?? '').toLowerCase();
     const pemilikLower = String(item.pemilik_nama ?? item.umkm?.nama ?? '').toLowerCase();
     const q = searchQuery.toLowerCase();
-    return namaLower.includes(q) || pemilikLower.includes(q);
+    const kategoriNama = typeof item.kategori === 'object' ? item.kategori?.nama : '';
+    const cocokKategori = kategoriFilter === 'Semua Kategori' || kategoriNama === kategoriFilter;
+    const cocokStatus = statusFilter === 'Semua Status' || item.status === statusFilter;
+    return cocokKategori && cocokStatus && (namaLower.includes(q) || pemilikLower.includes(q));
   });
 
   return (
@@ -250,7 +240,7 @@ export default function DaftarProduk() {
                     {/* HARGA */}
                     <td className="px-6 py-5 whitespace-nowrap">
                       <p className="text-[15px] font-bold text-slate-800">
-                        Rp {Number(item.harga ?? 0).toLocaleString('id-ID')}
+                        {formatHarga(item.harga)}
                       </p>
                     </td>
                     
@@ -261,6 +251,7 @@ export default function DaftarProduk() {
                           to={`/admin/umkm/produk/edit/${item.id}`} 
                           className="p-2 text-slate-500 hover:text-[#0A3D2D] bg-white rounded-lg border border-transparent hover:border-slate-200 transition-all shadow-sm hover:shadow"
                           title="Edit Produk"
+                          aria-label={`Edit produk ${item.nama}`}
                         >
                           <Edit2 className="w-[18px] h-[18px]" />
                         </Link>
@@ -268,6 +259,7 @@ export default function DaftarProduk() {
                           onClick={() => setDeleteConfirm(item.id)}
                           className="p-2 text-slate-500 hover:text-red-600 bg-white rounded-lg border border-transparent hover:border-slate-200 transition-all shadow-sm hover:shadow"
                           title="Hapus Produk"
+                          aria-label={`Hapus produk ${item.nama}`}
                         >
                           <Trash2 className="w-[18px] h-[18px]" />
                         </button>

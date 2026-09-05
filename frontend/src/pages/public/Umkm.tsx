@@ -5,6 +5,7 @@ import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BottomNav from '../../components/layout/BottomNav';
 import api, { getImageUrl } from '../../services/api';
+import { formatHarga } from '../../utils/format';
 
 // Interface for UMKM
 interface UmkmItem {
@@ -170,11 +171,11 @@ export default function Umkm() {
         Tambah Produk
       </button>
 
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-16 pb-24">
+      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-12 pb-24">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-5xl font-bold text-[#0A3D2D] mb-4">UMKM Desa</h1>
-          <p className="text-slate-600 max-w-2xl mx-auto text-sm md:text-base leading-relaxed font-medium">
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-[#0A3D2D] mb-3">UMKM Desa</h1>
+          <p className="text-slate-600 max-w-2xl text-sm md:text-base leading-relaxed">
             Data potensi usaha, pengembangan produk, dan etalase UMKM warga desa kami.
           </p>
         </div>
@@ -276,7 +277,7 @@ export default function Umkm() {
                     
                     <div className="mb-6">
                       <span className="text-slate-800 font-extrabold text-[15px]">
-                        Rp {Number(item.harga).toLocaleString('id-ID')}
+                        {formatHarga(item.harga)}
                       </span>
                     </div>
                     

@@ -62,13 +62,12 @@ export default function FormPengguna() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <img src="/images/logo-kuningan.png" alt="Logo" className="w-8 h-8 object-contain" />
+          <div className="mb-1">
             <h1 className="text-2xl font-extrabold text-[#0A3D2D]">
               Tambah Akun Baru
             </h1>
           </div>
-          <p className="text-sm font-medium text-slate-500 ml-11">
+          <p className="text-sm font-medium text-slate-500">
             Buat kredensial akses untuk staf atau warga.
           </p>
         </div>

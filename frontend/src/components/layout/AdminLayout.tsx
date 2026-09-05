@@ -267,7 +267,7 @@ export default function AdminLayout() {
                 {userProfile ? userProfile.namaLengkap : 'Memuat...'}
               </p>
               <p className="text-[10px] font-bold text-slate-400 tracking-wider">
-                {userProfile?.peran === 'admin' ? 'ADMIN DESA' : userProfile?.peran === 'publikasi' ? 'PUBLIKASI' : '...'}
+                {userProfile?.peran === 'admin' ? 'ADMIN' : userProfile?.peran === 'publikasi' ? 'PUBLIKASI' : '...'}
               </p>
             </div>
             <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-slate-200 shadow-sm flex items-center justify-center">

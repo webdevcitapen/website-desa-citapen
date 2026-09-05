@@ -103,7 +103,7 @@ export default function ProfilDesa() {
       {/* Header Banner */}
       <section className="relative h-[400px] lg:h-[500px] flex items-center overflow-hidden bg-[#FBFBFF]">
         <div className="absolute inset-0 bg-[url('/images/profil-banner.jpg')] bg-cover bg-center opacity-40"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#FBFBFF] via-[#FBFBFF]/80 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#FBFBFF] via-[#FBFBFF]/10 to-transparent"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-10">
           <div className="max-w-3xl">
@@ -138,7 +138,6 @@ export default function ProfilDesa() {
       <section className="py-12 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-start mb-8">
           <div className="inline-flex items-center gap-1.5 bg-[#EBF1FF] text-[#3460DC] text-xs font-bold px-3.5 py-1.5 rounded-full tracking-wide">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>
             Sejarah Desa
           </div>
         </div>
@@ -162,7 +161,6 @@ export default function ProfilDesa() {
 
             <div className="mb-12 text-left">
               <div className="inline-flex items-center gap-1.5 bg-[#1C4E35] text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full mb-5 tracking-wide shadow-sm">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                 Visi
               </div>
               <h3 className="text-xl lg:text-[22px] italic font-semibold text-slate-800 leading-relaxed whitespace-pre-line">
@@ -172,7 +170,6 @@ export default function ProfilDesa() {
 
             <div className="text-left">
               <div className="inline-flex items-center gap-1.5 bg-[#FFD1BB] text-[#D3602D] text-[11px] font-bold px-3.5 py-1.5 rounded-full mb-5 tracking-wide shadow-sm">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" /></svg>
                 Misi
               </div>
               <ul className="space-y-3 text-sm lg:text-[15px] text-slate-600 leading-relaxed font-medium list-disc list-inside">
@@ -256,7 +253,7 @@ export default function ProfilDesa() {
             {organisasi.map((org: any) => (
               <div key={org.id} className="bg-[#FBFBFF] p-5 rounded-2xl border border-slate-200 text-center w-full sm:w-[250px] hover:border-emerald-200 hover:shadow-md transition-all">
                 {org.foto ? (
-                  <img src={getImageUrl(org.foto)} alt={org.nama} className="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-white shadow" onError={(e) => (e.currentTarget.style.display='none')} />
+                  <img src={getImageUrl(org.foto)} alt={org.nama} className="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-white shadow" onError={(e) => (e.currentTarget.style.display = 'none')} />
                 ) : (
                   <div className="w-20 h-20 rounded-full bg-[#E8F3EF] flex items-center justify-center mx-auto mb-3 text-[#0A3D2D] font-bold text-xl">
                     {org.nama.charAt(0).toUpperCase()}

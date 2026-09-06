@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Edit2, Trash2, UserPlus } from 'lucide-react';
-import api from '../../../services/api';
+import api, { getImageUrl } from '../../../services/api';
 import ConfirmModal from '../../../components/ui/ConfirmModal';
 
 interface PenggunaData {
@@ -153,7 +153,7 @@ export default function DaftarPengguna() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-4">
                         {user.fotoProfil ? (
-                          <img src={user.fotoProfil} alt={user.namaLengkap} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+                          <img src={getImageUrl(user.fotoProfil)} alt={user.namaLengkap} className="w-10 h-10 rounded-full object-cover border border-slate-200" onError={(e)=>{ (e.currentTarget as HTMLImageElement).src='/placeholder.svg'; }} />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm">
                             {getInitials(user.namaLengkap || user.username)}

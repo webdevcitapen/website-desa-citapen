@@ -1,9 +1,31 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { UserCheck, MessageSquare, ArrowLeft } from 'lucide-react';
+import api from '../../services/api';
 
 export default function InformasiPendaftaran() {
+  const [noWa, setNoWa] = useState<string>('6281234567890');
+
+  useEffect(() => {
+    let aktif = true;
+    api.get('/kontak-admin')
+      .then((res) => {
+        const data = res.data?.data ?? res.data;
+        const hp: string | null | undefined = data?.nomorHp ?? data?.nomor_hp ?? null;
+        if (hp && typeof hp === 'string' && hp.trim() !== '') {
+          const bersih = hp.replace(/[^0-9]/g, '');
+          // 0xxx -> 62xxx untuk wa.me
+          const normal = bersih.startsWith('0') ? '62' + bersih.slice(1) : bersih.startsWith('62') ? bersih : '62' + bersih;
+          if (aktif) setNoWa(normal);
+        }
+      })
+      .catch(() => {
+        // tetap pakai fallback hardcode jika backend belum tersedia
+      });
+    return () => { aktif = false; };
+  }, []);
+
   const handleWhatsApp = () => {
-    const noWa = '6281234567890'; // Ganti dengan nomor WA admin sesungguhnya
     const message = encodeURIComponent('Halo Admin Desa Citapen, saya ingin mengajukan pembuatan akun baru (Mohon informasikan Nama Lengkap dan Peran yang diinginkan).');
     window.open(`https://wa.me/${noWa}?text=${message}`, '_blank');
   };

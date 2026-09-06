@@ -17,7 +17,11 @@ api.interceptors.request.use((config) => {
 
 export const getImageUrl = (pathRelatif: string | null | undefined): string => {
   if (!pathRelatif) return '/placeholder.svg';
-  return `${FILE_BASE_URL}/unggahan/${pathRelatif}`;
+  // Jika sudah URL absolut (dari Supabase atau backend lain), pakai langsung
+  if (pathRelatif.startsWith('http://') || pathRelatif.startsWith('https://')) return pathRelatif;
+  // Bersihkan leading slash agar tidak dobel //unggahan
+  const bersih = pathRelatif.replace(/^\/+/, '');
+  return `${FILE_BASE_URL}/unggahan/${bersih}`;
 };
 
 export default api;

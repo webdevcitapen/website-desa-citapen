@@ -1,32 +1,12 @@
 /**
  * Repositori produk: semua query ke tabel produk.
- * Query selalu berparameter dan daftar produk selalu memakai
- * paginasi (limit dan offset) demi performa yang tinggi.
+ * Migrasi ke Drizzle ORM dengan left join ke kategori, pemilik, umkm.
  */
 
-import { kumpulanKoneksi } from '../config/database.js';
+import { eq, and, desc, count, ilike, or } from 'drizzle-orm';
+import { db } from '../config/database.js';
+import { produk, kategoriProduk, pengguna, umkm } from '../db/schema.js';
 import { KesalahanTidakDitemukan } from '../utils/kesalahan.js';
-
-/** Bentuk baris produk yang dikembalikan postgresql. */
-interface BarisProduk {
-  id: string;
-  nama: string;
-  harga: string;
-  deskripsi: string;
-  foto: string | null;
-  kategori_id: string | null;
-  kategori_nama: string | null;
-  pemilik_id: string | null;
-  pemilik_username: string | null;
-  pemilik_nama_lengkap: string | null;
-  pemilik_foto_profil: string | null;
-  umkm_id: string | null;
-  umkm_nama: string | null;
-  umkm_nomor_hp: string | null;
-  umkm_alamat: string | null;
-  dibuat_pada: Date;
-  diperbarui_pada: Date;
-}
 
 /** Data untuk membuat atau memperbarui produk. */
 export interface DataProdukTersimpan {
@@ -46,10 +26,29 @@ export interface ParameterDaftarProduk {
   kategoriId?: number;
   pemilikId?: number;
   umkmId?: number;
+  cari?: string;
 }
 
-/** Mengubah baris produk dari database menjadi bentuk umum. */
-function ubahKeProduk(baris: BarisProduk): {
+/** Mengubah baris join menjadi bentuk umum produk. */
+function ubahKeProduk(baris: {
+  id: number;
+  nama: string;
+  harga: string;
+  deskripsi: string;
+  foto: string | null;
+  kategoriId: number | null;
+  kategoriNama: string | null;
+  pemilikId: number | null;
+  pemilikUsername: string | null;
+  pemilikNamaLengkap: string | null;
+  pemilikFotoProfil: string | null;
+  umkmId: number | null;
+  umkmNama: string | null;
+  umkmNomorHp: string | null;
+  umkmAlamat: string | null;
+  dibuatPada: Date;
+  diperbaruiPada: Date;
+}): {
   id: number;
   nama: string;
   harga: number;
@@ -67,84 +66,97 @@ function ubahKeProduk(baris: BarisProduk): {
   diperbaruiPada: Date;
 } {
   return {
-    id: Number(baris.id),
+    id: baris.id,
     nama: baris.nama,
-    // harga disimpan sebagai teks oleh pg, ubah menjadi angka
     harga: Number(baris.harga),
     deskripsi: baris.deskripsi,
     foto: baris.foto,
     kategori:
-      baris.kategori_id !== null && baris.kategori_nama !== null
-        ? { id: Number(baris.kategori_id), nama: baris.kategori_nama }
-        : null,
+      baris.kategoriId !== null && baris.kategoriNama !== null
+        ? { id: baris.kategoriId, nama: baris.kategoriNama }
+        : { id: 0, nama: 'Umum' },
     pemilik:
-      baris.pemilik_id !== null && baris.pemilik_username !== null
+      baris.pemilikId !== null && baris.pemilikUsername !== null
         ? {
-            id: Number(baris.pemilik_id),
-            username: baris.pemilik_username,
-            namaLengkap: baris.pemilik_nama_lengkap ?? '',
-            fotoProfil: baris.pemilik_foto_profil,
+            id: baris.pemilikId,
+            username: baris.pemilikUsername,
+            namaLengkap: baris.pemilikNamaLengkap ?? '',
+            fotoProfil: baris.pemilikFotoProfil,
           }
         : null,
     umkm:
-      baris.umkm_id !== null && baris.umkm_nama !== null
+      baris.umkmId !== null && baris.umkmNama !== null
         ? {
-            id: Number(baris.umkm_id),
-            nama: baris.umkm_nama,
-            nomorHp: baris.umkm_nomor_hp,
-            alamat: baris.umkm_alamat,
+            id: baris.umkmId,
+            nama: baris.umkmNama,
+            nomorHp: baris.umkmNomorHp,
+            alamat: baris.umkmAlamat,
           }
         : null,
-    dibuatPada: baris.dibuat_pada,
-    diperbaruiPada: baris.diperbarui_pada,
+    dibuatPada: baris.dibuatPada,
+    diperbaruiPada: baris.diperbaruiPada,
   };
 }
 
-/** Potongan query kolom yang dipakai untuk bergabung dengan tabel lain. */
-const KOLOM_PRODUK =
-  `pr.id, pr.nama, pr.harga, pr.deskripsi, pr.foto, ` +
-  `pr.kategori_id, k.nama AS kategori_nama, ` +
-  `pr.pemilik_id, p.username AS pemilik_username, ` +
-  `p.nama_lengkap AS pemilik_nama_lengkap, ` +
-  `p.foto_profil AS pemilik_foto_profil, ` +
-  `pr.umkm_id, u.nama AS umkm_nama, u.nomor_hp AS umkm_nomor_hp, u.alamat AS umkm_alamat, ` +
-  `pr.dibuat_pada, pr.diperbarui_pada`;
+/** Seleksi kolom produk + join untuk reuse. */
+function seleksiProduk() {
+  return {
+    id: produk.id,
+    nama: produk.nama,
+    harga: produk.harga,
+    deskripsi: produk.deskripsi,
+    foto: produk.foto,
+    kategoriId: produk.kategoriId,
+    kategoriNama: kategoriProduk.nama,
+    pemilikId: produk.pemilikId,
+    pemilikUsername: pengguna.username,
+    pemilikNamaLengkap: pengguna.namaLengkap,
+    pemilikFotoProfil: pengguna.fotoProfil,
+    umkmId: produk.umkmId,
+    umkmNama: umkm.nama,
+    umkmNomorHp: umkm.nomorHp,
+    umkmAlamat: umkm.alamat,
+    dibuatPada: produk.dibuatPada,
+    diperbaruiPada: produk.diperbaruiPada,
+  };
+}
 
 /** Membuat produk baru dan mengembalikan data lengkapnya. */
 export async function buatProduk(
   data: DataProdukTersimpan,
 ): Promise<ReturnType<typeof ubahKeProduk>> {
-  // Simpan produk dulu, lalu ambil data lengkapnya beserta kategori & UMKM
-  const hasil = await kumpulanKoneksi.query<{ id: string }>(
-    `INSERT INTO produk (nama, harga, deskripsi, foto, pemilik_id, kategori_id, umkm_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     RETURNING id`,
-    [data.nama, data.harga, data.deskripsi, data.foto, data.pemilikId, data.kategoriId, data.umkmId],
-  );
+  const hasil = await db
+    .insert(produk)
+    .values({
+      nama: data.nama,
+      harga: String(data.harga),
+      deskripsi: data.deskripsi,
+      foto: data.foto,
+      pemilikId: data.pemilikId,
+      kategoriId: data.kategoriId as number,
+      umkmId: data.umkmId,
+    })
+    .returning({ id: produk.id });
 
-  const produk = await temukanProdukBerdasarkanId(Number(hasil.rows[0].id));
-  if (!produk) {
-    throw new KesalahanTidakDitemukan('Produk tidak ditemukan');
-  }
-  return produk;
+  const idBaru = hasil[0].id;
+  const produkBaru = await temukanProdukBerdasarkanId(idBaru);
+  if (!produkBaru) throw new KesalahanTidakDitemukan('Produk tidak ditemukan');
+  return produkBaru;
 }
 
 /** Mencari produk berdasarkan id beserta kategori, pemilik, dan UMKM-nya. */
 export async function temukanProdukBerdasarkanId(
   id: number,
 ): Promise<ReturnType<typeof ubahKeProduk> | null> {
-  const hasil = await kumpulanKoneksi.query<BarisProduk>(
-    `SELECT ${KOLOM_PRODUK}
-       FROM produk pr
-       LEFT JOIN kategori_produk k ON k.id = pr.kategori_id
-       LEFT JOIN pengguna p ON p.id = pr.pemilik_id
-       LEFT JOIN umkm u ON u.id = pr.umkm_id
-      WHERE pr.id = $1
-      LIMIT 1`,
-    [id],
-  );
-  const baris = hasil.rows[0];
-  return baris ? ubahKeProduk(baris) : null;
+  const baris = await db
+    .select(seleksiProduk())
+    .from(produk)
+    .leftJoin(kategoriProduk, eq(produk.kategoriId, kategoriProduk.id))
+    .leftJoin(pengguna, eq(produk.pemilikId, pengguna.id))
+    .leftJoin(umkm, eq(produk.umkmId, umkm.id))
+    .where(eq(produk.id, id))
+    .limit(1);
+  return baris[0] ? ubahKeProduk(baris[0]) : null;
 }
 
 /** Menghitung jumlah produk dengan penyaring opsional. */
@@ -152,91 +164,67 @@ export async function hitungProduk(
   kategoriId?: number,
   pemilikId?: number,
   umkmId?: number,
+  cari?: string,
 ): Promise<number> {
-  const kondisi: string[] = [];
-  const nilai: unknown[] = [];
-
-  if (kategoriId) {
-    nilai.push(kategoriId);
-    kondisi.push(`kategori_id = $${nilai.length}`);
-  }
-  if (pemilikId) {
-    nilai.push(pemilikId);
-    kondisi.push(`pemilik_id = $${nilai.length}`);
-  }
-  if (umkmId) {
-    nilai.push(umkmId);
-    kondisi.push(`umkm_id = $${nilai.length}`);
+  const kondisi = [];
+  if (kategoriId) kondisi.push(eq(produk.kategoriId, kategoriId));
+  if (pemilikId) kondisi.push(eq(produk.pemilikId, pemilikId));
+  if (umkmId) kondisi.push(eq(produk.umkmId, umkmId));
+  if (cari && cari.trim().length > 0) {
+    const pola = `%${cari.trim()}%`;
+    kondisi.push(or(ilike(produk.nama, pola), ilike(produk.deskripsi, pola)) as ReturnType<typeof eq>);
   }
 
-  const klausaWhere = kondisi.length > 0 ? `WHERE ${kondisi.join(' AND ')}` : '';
-
-  const hasil = await kumpulanKoneksi.query<{ total: number }>(
-    `SELECT COUNT(*)::int AS total
-       FROM produk
-       ${klausaWhere}`,
-    nilai,
-  );
-  return hasil.rows[0]?.total ?? 0;
+  const where = kondisi.length > 0 ? and(...kondisi) : undefined;
+  const hasil = await db.select({ total: count() }).from(produk).where(where);
+  return hasil[0]?.total ?? 0;
 }
 
 /**
  * Mengambil daftar produk dengan paginasi dan penyaring.
- * Query dibatasi limit dan offset untuk performa pada traffic tinggi.
+ * Mendukung pencarian nama/deskripsi (ilike) untuk performa.
  */
 export async function daftarProduk(
   parameter: ParameterDaftarProduk,
 ): Promise<ReturnType<typeof ubahKeProduk>[]> {
-  const kondisi: string[] = [];
-  const nilai: unknown[] = [];
-
-  // Susun penyaring dari potongan query yang tetap dan parameter
-  if (parameter.kategoriId) {
-    nilai.push(parameter.kategoriId);
-    kondisi.push(`pr.kategori_id = $${nilai.length}`);
-  }
-  if (parameter.pemilikId) {
-    nilai.push(parameter.pemilikId);
-    kondisi.push(`pr.pemilik_id = $${nilai.length}`);
-  }
-  if (parameter.umkmId) {
-    nilai.push(parameter.umkmId);
-    kondisi.push(`pr.umkm_id = $${nilai.length}`);
+  const kondisi = [];
+  if (parameter.kategoriId) kondisi.push(eq(produk.kategoriId, parameter.kategoriId));
+  if (parameter.pemilikId) kondisi.push(eq(produk.pemilikId, parameter.pemilikId));
+  if (parameter.umkmId) kondisi.push(eq(produk.umkmId, parameter.umkmId));
+  if (parameter.cari && parameter.cari.trim().length > 0) {
+    const pola = `%${parameter.cari.trim()}%`;
+    kondisi.push(or(ilike(produk.nama, pola), ilike(produk.deskripsi, pola)) as ReturnType<typeof eq>);
   }
 
-  const klausaWhere = kondisi.length > 0 ? `WHERE ${kondisi.join(' AND ')}` : '';
+  const where = kondisi.length > 0 ? and(...kondisi) : undefined;
 
-  nilai.push(parameter.batas, parameter.lewati);
+  const baris = await db
+    .select(seleksiProduk())
+    .from(produk)
+    .leftJoin(kategoriProduk, eq(produk.kategoriId, kategoriProduk.id))
+    .leftJoin(pengguna, eq(produk.pemilikId, pengguna.id))
+    .leftJoin(umkm, eq(produk.umkmId, umkm.id))
+    .where(where)
+    .orderBy(desc(produk.dibuatPada))
+    .limit(parameter.batas)
+    .offset(parameter.lewati);
 
-  const hasil = await kumpulanKoneksi.query<BarisProduk>(
-    `SELECT ${KOLOM_PRODUK}
-       FROM produk pr
-       LEFT JOIN kategori_produk k ON k.id = pr.kategori_id
-       LEFT JOIN pengguna p ON p.id = pr.pemilik_id
-       LEFT JOIN umkm u ON u.id = pr.umkm_id
-       ${klausaWhere}
-      ORDER BY pr.dibuat_pada DESC
-      LIMIT $${nilai.length - 1} OFFSET $${nilai.length}`,
-    nilai,
-  );
-  return hasil.rows.map(ubahKeProduk);
+  return baris.map(ubahKeProduk);
 }
 
 /** Mengambil produk terbaru dalam jumlah tertentu (untuk halaman beranda). */
 export async function daftarProdukTerbaru(
   jumlah: number,
 ): Promise<ReturnType<typeof ubahKeProduk>[]> {
-  const hasil = await kumpulanKoneksi.query<BarisProduk>(
-    `SELECT ${KOLOM_PRODUK}
-       FROM produk pr
-       LEFT JOIN kategori_produk k ON k.id = pr.kategori_id
-       LEFT JOIN pengguna p ON p.id = pr.pemilik_id
-       LEFT JOIN umkm u ON u.id = pr.umkm_id
-      ORDER BY pr.dibuat_pada DESC
-      LIMIT $1`,
-    [jumlah],
-  );
-  return hasil.rows.map(ubahKeProduk);
+  const baris = await db
+    .select(seleksiProduk())
+    .from(produk)
+    .leftJoin(kategoriProduk, eq(produk.kategoriId, kategoriProduk.id))
+    .leftJoin(pengguna, eq(produk.pemilikId, pengguna.id))
+    .leftJoin(umkm, eq(produk.umkmId, umkm.id))
+    .orderBy(desc(produk.dibuatPada))
+    .limit(jumlah);
+  return baris.map(ubahKeProduk);
 }
 
 /** Memperbarui produk dan mengembalikan data terbarunya. */
@@ -244,39 +232,29 @@ export async function perbaruiProduk(
   id: number,
   data: Pick<DataProdukTersimpan, 'nama' | 'harga' | 'deskripsi' | 'foto' | 'kategoriId' | 'umkmId'>,
 ): Promise<ReturnType<typeof ubahKeProduk>> {
-  // Perbarui produk dulu, lalu ambil data lengkapnya beserta kategori & UMKM
-  const hasil = await kumpulanKoneksi.query<{ id: string }>(
-    `UPDATE produk pr
-        SET nama = $2,
-            harga = $3,
-            deskripsi = $4,
-            foto = $5,
-            kategori_id = $6,
-            umkm_id = $7,
-            diperbarui_pada = NOW()
-      WHERE pr.id = $1
-     RETURNING id`,
-    [id, data.nama, data.harga, data.deskripsi, data.foto, data.kategoriId, data.umkmId],
-  );
-  if (!hasil.rows[0]) {
-    throw new KesalahanTidakDitemukan('Produk tidak ditemukan');
-  }
+  const hasil = await db
+    .update(produk)
+    .set({
+      nama: data.nama,
+      harga: String(data.harga),
+      deskripsi: data.deskripsi,
+      foto: data.foto,
+      kategoriId: data.kategoriId as number,
+      umkmId: data.umkmId,
+      diperbaruiPada: new Date(),
+    })
+    .where(eq(produk.id, id))
+    .returning({ id: produk.id });
 
-  const produk = await temukanProdukBerdasarkanId(Number(hasil.rows[0].id));
-  if (!produk) {
-    throw new KesalahanTidakDitemukan('Produk tidak ditemukan');
-  }
-  return produk;
+  if (!hasil[0]) throw new KesalahanTidakDitemukan('Produk tidak ditemukan');
+
+  const terbaru = await temukanProdukBerdasarkanId(hasil[0].id);
+  if (!terbaru) throw new KesalahanTidakDitemukan('Produk tidak ditemukan');
+  return terbaru;
 }
 
-/** Menghapus produk berdasarkan id (wajib memakai klausa where). */
+/** Menghapus produk berdasarkan id. */
 export async function hapusProduk(id: number): Promise<void> {
-  const hasil = await kumpulanKoneksi.query(
-    `DELETE FROM produk
-      WHERE id = $1`,
-    [id],
-  );
-  if (!hasil.rowCount) {
-    throw new KesalahanTidakDitemukan('Produk tidak ditemukan');
-  }
+  const hasil = await db.delete(produk).where(eq(produk.id, id)).returning({ id: produk.id });
+  if (hasil.length === 0) throw new KesalahanTidakDitemukan('Produk tidak ditemukan');
 }

@@ -6,6 +6,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { bungkusHandler } from '../middleware/penangan-kesalahan.js';
 import { kirimSukses } from '../utils/respons.js';
+import { tambahHeaderGuard } from '../utils/guard-form.js';
 import {
   ambilProfilDesa,
   ubahProfilDesa,
@@ -17,6 +18,7 @@ import {
 export const dapatkanProfilDesa = bungkusHandler(
   async (_permintaan: Request, tanggapan: Response, _berikutnya: NextFunction) => {
     const profil = await ambilProfilDesa();
+    tambahHeaderGuard(tanggapan, profil);
     kirimSukses(tanggapan, profil, 'Profil desa berhasil diambil');
   },
 );

@@ -349,10 +349,17 @@ paths:
     get:
       tags: [Berita]
       summary: Daftar berita untuk publik
-      description: Diurutkan dari yang terbaru, dengan paginasi.
+      description: Diurutkan dari yang terbaru, dengan paginasi dan filter kategori.
       parameters:
         - $ref: "#/components/parameters/Halaman"
         - $ref: "#/components/parameters/PerHalaman"
+        - name: kategori
+          in: query
+          description: Filter berdasarkan kategori berita (Umum, Infrastruktur, Kesehatan, Pendidikan, dll).
+          required: false
+          schema:
+            type: string
+            enum: [Umum, Infrastruktur, Kesehatan, Pendidikan, Pertanian, Ekonomi, Sosial, Budaya]
       responses:
         "200":
           description: Daftar berita berhasil diambil.
@@ -370,7 +377,7 @@ paths:
       summary: Terbitkan berita baru
       description: |
         Hanya admin desa dan publikasi. Kirim multipart/form-data;
-        gambar bersifat opsional.
+        gambar dan kategori bersifat opsional (default Umum).
       security:
         - bearerAuth: []
       requestBody:
@@ -388,6 +395,11 @@ paths:
                 isi:
                   type: string
                   minLength: 20
+                kategori:
+                  type: string
+                  enum: [Umum, Infrastruktur, Kesehatan, Pendidikan, Pertanian, Ekonomi, Sosial, Budaya]
+                  default: Umum
+                  description: Kategori berita, default Umum.
                 gambar:
                   type: string
                   format: binary
@@ -451,7 +463,7 @@ paths:
       summary: Ubah berita
       description: |
         Hanya penulis berita atau admin desa. Gambar baru opsional;
-        tanpa gambar maka gambar lama dipertahankan.
+        tanpa gambar maka gambar lama dipertahankan. Kategori default Umum.
       security:
         - bearerAuth: []
       parameters:
@@ -471,6 +483,10 @@ paths:
                 isi:
                   type: string
                   minLength: 20
+                kategori:
+                  type: string
+                  enum: [Umum, Infrastruktur, Kesehatan, Pendidikan, Pertanian, Ekonomi, Sosial, Budaya]
+                  default: Umum
                 gambar:
                   type: string
                   format: binary
@@ -1573,6 +1589,15 @@ components:
           type: integer
         foto:
           type: [string, "null"]
+          description: Path relatif foto; jika null frontend wajib pakai fallback inisial/warna.
+        inisial:
+          type: string
+          example: UK
+          description: Inisial nama untuk fallback avatar (2 huruf kapital).
+        warnaAvatar:
+          type: string
+          example: "#0A3D2D"
+          description: Warna avatar fallback yang konsisten berdasarkan hash nama.
         dibuatPada:
           type: string
           format: date-time
@@ -1657,6 +1682,11 @@ components:
         gambar:
           type: [string, "null"]
           description: Path relatif gambar; lihat catatan URL gambar.
+        kategori:
+          type: string
+          enum: [Umum, Infrastruktur, Kesehatan, Pendidikan, Pertanian, Ekonomi, Sosial, Budaya]
+          default: Umum
+          description: Kategori berita.
         penulis:
           $ref: "#/components/schemas/Penulis"
         dibuatPada:
@@ -1709,7 +1739,8 @@ components:
           type: [string, "null"]
           description: Path relatif gambar; lihat catatan URL gambar.
         kategori:
-          type: [object, "null"]
+          type: object
+          description: Kategori produk, selalu ada (fallback Umum jika dulu NULL). Tidak lagi nullable setelah migrasi 2025-09-05.
           properties:
             id:
               type: integer

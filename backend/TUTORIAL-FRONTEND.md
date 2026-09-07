@@ -288,6 +288,8 @@ async function tambahProduk(data: {
   form.append("nama", data.nama);
   form.append("harga", String(data.harga));
   form.append("deskripsi", data.deskripsi);
+  // Kategori kini NOT NULL di DB (migrasi 2025-09-05). Jika tidak dikirim,
+  // backend otomatis fallback ke kategori "Umum" milik admin.
   if (data.kategoriId) form.append("kategoriId", String(data.kategoriId));
   if (data.foto) form.append("foto", data.foto);
 
@@ -370,12 +372,14 @@ await panggilApi(`/kategori/${id}`, {
 
 ### 6.5 Berita (admin desa / publikasi)
 
-Sama seperti produk, tetapi kolom berkasnya bernama `gambar`:
+Sama seperti produk, tetapi kolom berkasnya bernama `gambar` dan ada kolom
+`kategori` (enum yang sama dengan frontend `FormBerita.tsx`):
 
 ```ts
 const form = new FormData();
 form.append("judul", judul);
 form.append("isi", isi);
+form.append("kategori", kategori); // Umum | Infrastruktur | Kesehatan | Pendidikan | Pertanian | Ekonomi | Sosial | Budaya
 if (gambar) form.append("gambar", gambar);
 
 await panggilApi<Berita>("/berita", {
@@ -383,6 +387,10 @@ await panggilApi<Berita>("/berita", {
   token: tokenSaya(),
   berkas: form,
 });
+
+// Filter berita berdasarkan kategori
+const umum = await panggilApi("/berita?kategori=Umum");
+const infra = await panggilApi("/berita?kategori=Infrastruktur");
 ```
 
 ### 6.6 Ubah profil diri
@@ -491,6 +499,51 @@ function urlGambar(pathRelatif: string | null): string | undefined {
 
 > Selalu siapkan gambar pengganti saat berkas tidak ada atau gagal dimuat.
 
+### Fallback avatar khusus untuk struktur organisasi
+
+Backend kini mengembalikan field `inisial` dan `warnaAvatar` untuk setiap anggota
+struktur organisasi, sehingga frontend tidak perlu menghitung sendiri. Pakai
+fallback ini ketika `foto` bernilai `null`:
+
+```tsx
+import { getImageUrl } from '../services/api';
+
+function AvatarStruktur({ anggota }: { anggota: StrukturOrganisasi }) {
+  if (anggota.foto) {
+    return <img src={getImageUrl(anggota.foto)} alt={anggota.nama} className="w-20 h-20 rounded-full object-cover" />;
+  }
+  // Fallback avatar inisial dengan warna konsisten dari backend
+  return (
+    <div
+      className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-xl"
+      style={{ backgroundColor: anggota.warnaAvatar }}
+    >
+      {anggota.inisial}
+    </div>
+  );
+}
+```
+
+Contoh data dari `GET /struktur-organisasi`:
+
+```json
+{
+  "id": 1,
+  "nama": "Uri Miskari",
+  "jabatan": "Kepala Desa",
+  "urutan": 1,
+  "foto": null,
+  "inisial": "UM",
+  "warnaAvatar": "#0A3D2D",
+  "dibuatPada": "...",
+  "diperbaruiPada": "..."
+}
+```
+
+Jika kamu sudah memakai `nama.charAt(0)` manual, tetap berfungsi, tapi
+direkomendasikan pakai `inisial` + `warnaAvatar` dari backend agar warna
+konsisten lintas device.
+
 ---
 
 ## 9. Tabel Referensi Cepat
@@ -502,12 +555,17 @@ function urlGambar(pathRelatif: string | null): string | undefined {
 | GET    | `/`                 | Informasi dasar layanan          |
 | GET    | `/kesehatan`        | Cek kesehatan server & database  |
 | GET    | `/beranda`          | Data halaman utama               |
-| GET    | `/berita`           | Daftar berita (paginasi)         |
+| GET    | `/berita`           | Daftar berita (paginasi, filter kategori) |
 | GET    | `/berita/:id`       | Detail berita                    |
 | GET    | `/produk`           | Daftar produk (paginasi, filter) |
 | GET    | `/produk/:id`       | Detail produk                    |
 | GET    | `/kategori`         | Daftar kategori                  |
 | POST   | `/autentikasi/masuk`| Login                            |
+
+> **Baru 2025-09-05**: `GET /berita` kini mendukung `?kategori=Infrastruktur` (enum:
+> `Umum, Infrastruktur, Kesehatan, Pendidikan, Pertanian, Ekonomi, Sosial, Budaya`).
+> `GET /produk` tetap sama, tapi `kategori` kini selalu ada (fallback `Umum`).
+> `GET /struktur-organisasi` kini mengembalikan `inisial` + `warnaAvatar` untuk fallback.
 
 ### Rute dengan token (diri sendiri)
 
@@ -576,6 +634,106 @@ function urlGambar(pathRelatif: string | null): string | undefined {
 
 ---
 
+## 11. Guard Pencegah Kehilangan Data Form (baru 2025-09-05)
+
+Semua form admin yang mengubah data kini **wajib** memakai guard agar pengguna
+tidak kehilangan data saat tidak sengaja menutup tab, me-refresh, atau klik
+navigasi (misal menu sidebar) sebelum menekan Simpan.
+
+Backend sudah menyiapkan dukungan **ETag/If-Match** dan dokumentasi hook
+siap-pakai. Frontend tidak perlu menebak lagi — cukup import hook
+`useGuardForm` di bawah ini.
+
+### 11.1. Pasang hook `useGuardForm` sekali
+
+Buat file `src/hooks/useGuardForm.ts`:
+
+```ts
+import { useEffect } from 'react';
+import { useBlocker } from 'react-router-dom';
+
+export function useGuardForm(isDirty: boolean) {
+  const blocker = useBlocker(isDirty);
+
+  // Cegah perpindahan halaman SPA (klik menu, back button)
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      const yakin = confirm('Perubahan belum disimpan. Yakin ingin keluar? Data akan hilang.');
+      if (yakin) blocker.proceed();
+      else blocker.reset();
+    }
+  }, [blocker]);
+
+  // Cegah reload / tutup tab
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+}
+```
+
+### 11.2. Pakai di setiap form (contoh FormBerita)
+
+```tsx
+import { useGuardForm } from '../../hooks/useGuardForm';
+
+export default function FormBerita() {
+  const [judul, setJudul] = useState('');
+  const [isi, setIsi] = useState('');
+  const [kategori, setKategori] = useState('Umum');
+  const [initial, setInitial] = useState({ judul: '', isi: '', kategori: 'Umum' });
+
+  // Anggap dirty jika ada perubahan vs data awal dari server
+  const isDirty = judul !== initial.judul || isi !== initial.isi || kategori !== initial.kategori;
+  useGuardForm(isDirty);
+
+  // ... sisanya sama
+}
+```
+
+Lakukan hal yang sama untuk:
+
+- `FormBerita` (`admin/berita/FormBerita.tsx`)
+- `FormProduk` & `FormUMKM` (`admin/umkm/...`)
+- `FormPengguna` / `EditPengguna`
+- `ProfilAdmin` (semua 6 section: Sejarah, VisiMisi, Geografis, Struktur, Riwayat, Galeri)
+- `ProfilPengguna`
+
+### 11.3. Dukungan backend (ETag)
+
+Setiap `GET /berita/:id`, `GET /produk/:id`, `GET /struktur-organisasi/:id`,
+`GET /profil-desa`, dan `GET /umkm/:id` kini mengirim header:
+
+```
+ETag: "abc123..."
+Last-Modified: Sat, 05 Sep 2026 11:00:00 GMT
+Cache-Control: no-store
+```
+
+Saat `PUT`/`PATCH`, kirim kembali nilai ETag di header `If-Match`:
+
+```ts
+const detail = await api.get(`/berita/${id}`);
+const etag = detail.headers.etag;
+
+await api.put(`/berita/${id}`, formData, {
+  headers: { 'If-Match': etag }
+});
+```
+
+Jika data sudah diubah orang lain, backend membalas `409 DATA_BERDUPLIKAT`
+dengan pesan _"Data telah diubah oleh pengguna lain. Muat ulang halaman
+sebelum menyimpan."_ — tampilkan konfirmasi ke pengguna.
+
+Detail implementasi backend ada di `src/utils/guard-form.ts`.
+
+---
+
 ## Checklist Sebelum Memulai
 
 - [ ] `VITE_API_URL` sudah diisi di `.env` frontend.
@@ -585,6 +743,9 @@ function urlGambar(pathRelatif: string | null): string | undefined {
 - [ ] Jangan set `Content-Type` manual saat memakai FormData.
 - [ ] Selalu tampilkan `pesan` dari backend saat terjadi kesalahan.
 - [ ] Gabungkan `URL_BERKAS + "/unggahan/" + path` untuk menampilkan gambar.
+- [ ] Pasang `useGuardForm(isDirty)` di semua form admin (lihat §11).
+- [ ] Pakai `inisial` + `warnaAvatar` dari `/struktur-organisasi` untuk fallback avatar.
+- [ ] Kirim `kategori` untuk berita (`Umum` default) dan selalu kirim `kategoriId` untuk produk (fallback `Umum` otomatis jika lupa).
 
 Selamat mengembangkan! Jika ada yang kurang jelas, tanyakan kepada
 developer backend atau baca `api-spesifikasi.yaml`.

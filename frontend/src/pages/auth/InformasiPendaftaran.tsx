@@ -26,7 +26,7 @@ export default function InformasiPendaftaran() {
   }, []);
 
   const handleWhatsApp = () => {
-    const message = encodeURIComponent('Halo Admin Desa Citapen, saya ingin mengajukan pembuatan akun baru (Mohon informasikan Nama Lengkap dan Peran yang diinginkan).');
+    const message = encodeURIComponent('Halo Admin Desa Citapen, saya ingin mengajukan pembuatan akun baru (Mohon informasikan Nama Lengkap dan Alasan anda membuat akun).');
     window.open(`https://wa.me/${noWa}?text=${message}`, '_blank');
   };
 
@@ -73,7 +73,7 @@ export default function InformasiPendaftaran() {
             <div className="pt-1">
               <h3 className="text-sm font-bold text-slate-800 mb-1">Kirim pesan Nama & Peran</h3>
               <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-medium">
-                Sebutkan nama lengkap Anda dan peran yang ingin didaftarkan (Admin/UMKM).
+                Sebutkan nama lengkap anda dan tujuan anda membuat akun
               </p>
             </div>
           </div>

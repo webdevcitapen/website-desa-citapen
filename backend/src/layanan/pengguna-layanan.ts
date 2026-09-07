@@ -14,11 +14,12 @@ import {
   KesalahanTidakDitemukan,
 } from '../utils/kesalahan.js';
 import { kompresGambar } from '../utils/kompresi-gambar.js';
-import { hapusBerkas, simpanBerkas } from '../utils/berkas.js';
+import { hapusBerkas, simpanBerkas, dapatkanUrlBerkasUntukKlien } from '../utils/berkas.js';
 import { logger } from '../utils/logger.js';
 import {
   ambilFotoProfilPengguna,
   buatPengguna,
+  cariKontakAdmin,
   daftarPengguna as daftarPenggunaRepositori,
   hapusPengguna,
   hitungPengguna,
@@ -88,23 +89,34 @@ export async function daftarkanPenggunaOlehAdmin(
     'Pengguna baru berhasil didaftarkan oleh admin desa',
   );
 
-  return pengguna;
+  return perkayaFotoProfil(pengguna);
+}
+
+/** Mengubah path fotoProfil menjadi URL CDN. */
+function perkayaFotoProfil<T extends { fotoProfil: string | null }>(item: T): T {
+  return {
+    ...item,
+    fotoProfil: dapatkanUrlBerkasUntukKlien(item.fotoProfil) as T['fotoProfil'],
+  };
 }
 
 /** Mengambil daftar pengguna dengan paginasi untuk admin desa. */
 export async function ambilDaftarPengguna(
   parameter: ParameterDaftarPenggunaLayanan,
 ): Promise<HasilPaginasi<DataPengguna>> {
-  const daftar = await daftarPenggunaRepositori({
-    batas: parameter.batas,
-    lewati: parameter.lewati,
-    peran: parameter.peran,
-  });
+  const [daftar, total] = await Promise.all([
+    daftarPenggunaRepositori({
+      batas: parameter.batas,
+      lewati: parameter.lewati,
+      peran: parameter.peran,
+    }),
+    hitungPengguna(parameter.peran),
+  ]);
 
-  const total = await hitungPengguna(parameter.peran);
+  const daftarDenganUrl = daftar.map(perkayaFotoProfil);
 
   return {
-    daftar,
+    daftar: daftarDenganUrl,
     halaman: parameter.halaman,
     perHalaman: parameter.perHalaman,
     total,
@@ -120,7 +132,7 @@ export async function ambilDetailPenggunaOlehAdmin(
   if (!pengguna) {
     throw new KesalahanTidakDitemukan('Pengguna tidak ditemukan');
   }
-  return pengguna;
+  return perkayaFotoProfil(pengguna);
 }
 
 /** Mengubah profil diri sendiri. */
@@ -137,7 +149,7 @@ export async function ubahProfilDiri(
     email: data.email && data.email.length > 0 ? data.email : null,
     nomorHp: data.nomorHp && data.nomorHp.length > 0 ? data.nomorHp : null,
   });
-  return pengguna;
+  return perkayaFotoProfil(pengguna);
 }
 
 /**
@@ -161,17 +173,19 @@ export async function ubahFotoProfilDiri(
     hasilKompresi.ekstensi,
   );
 
-  // Simpan path foto baru lalu hapus foto lama
+  // Ambil foto lama SEBELUM diperbarui, lalu simpan baru dan hapus lama
+  // FIX: sebelumnya fotoLama diambil setelah perbarui (selalu sama dengan pathBaru), jadi foto lama tidak pernah terhapus.
+  const fotoLama = await ambilFotoProfilPengguna(id);
+
   const pengguna = await perbaruiFotoProfilPengguna(id, pathBaru);
 
-  const fotoLama = await ambilFotoProfilPengguna(id);
   if (fotoLama && fotoLama !== pathBaru) {
     await hapusBerkas(fotoLama);
   }
 
   logger.info({ penggunaId: id }, 'Foto profil berhasil diperbarui');
 
-  return pengguna;
+  return perkayaFotoProfil(pengguna);
 }
 
 /** Mengubah kata sandi diri sendiri setelah memverifikasi kata sandi lama. */
@@ -193,7 +207,7 @@ export async function ubahKataSandiDiri(
     throw new KesalahanAutentikasi();
   }
 
-  const kataSandiLamaBenar = await bandingkanKataSandi(kataSandiLama, baris.kata_sandi_hash);
+  const kataSandiLamaBenar = await bandingkanKataSandi(kataSandiLama, baris.kataSandiHash);
   if (!kataSandiLamaBenar) {
     throw new KesalahanAutentikasi(
       'Kata sandi lama salah',
@@ -222,20 +236,54 @@ export async function ubahUsernameDiri(
   if (!pengguna) {
     throw new KesalahanTidakDitemukan('Pengguna tidak ditemukan');
   }
-  return pengguna;
+  return perkayaFotoProfil(pengguna);
+}
+
+/** Admin desa mengubah profil pengguna lain (namaLengkap, email, nomorHp). */
+export async function ubahProfilOlehAdmin(
+  id: number,
+  data: {
+    namaLengkap: string;
+    email: string | null;
+    nomorHp: string | null;
+  },
+  pemintaId?: number,
+): Promise<DataPengguna> {
+  // Pastikan pengguna yang diubah bukan akun admin lain (kecuali diri sendiri)
+  const pengguna = await temukanPenggunaBerdasarkanId(id);
+  if (!pengguna) {
+    throw new KesalahanTidakDitemukan('Pengguna tidak ditemukan');
+  }
+  if (pengguna.peran === 'admin' && pengguna.id !== pemintaId) {
+    throw new KesalahanOtorisasi('Akun admin desa tidak dapat diubah di sini');
+  }
+
+  const penggunaBaru = await perbaruiProfilPengguna(id, {
+    namaLengkap: data.namaLengkap,
+    email: data.email && data.email.length > 0 ? data.email : null,
+    nomorHp: data.nomorHp && data.nomorHp.length > 0 ? data.nomorHp : null,
+  });
+
+  logger.info(
+    { penggunaId: id, diubahOleh: 'admin' },
+    'Profil pengguna diubah oleh admin desa',
+  );
+
+  return perkayaFotoProfil(penggunaBaru);
 }
 
 /** Admin desa mengubah kata sandi pengguna lain. */
 export async function ubahKataSandiOlehAdmin(
   id: number,
   kataSandiBaru: string,
+  pemintaId?: number,
 ): Promise<void> {
-  // Pastikan pengguna yang diubah bukan akun admin lain
+  // Pastikan pengguna yang diubah bukan akun admin lain (kecuali diri sendiri)
   const pengguna = await temukanPenggunaBerdasarkanId(id);
   if (!pengguna) {
     throw new KesalahanTidakDitemukan('Pengguna tidak ditemukan');
   }
-  if (pengguna.peran === 'admin') {
+  if (pengguna.peran === 'admin' && pengguna.id !== pemintaId) {
     throw new KesalahanOtorisasi('Akun admin desa tidak dapat diubah di sini');
   }
 
@@ -252,12 +300,13 @@ export async function ubahKataSandiOlehAdmin(
 export async function ubahUsernameOlehAdmin(
   id: number,
   usernameBaru: string,
+  pemintaId?: number,
 ): Promise<DataPengguna> {
   const pengguna = await temukanPenggunaBerdasarkanId(id);
   if (!pengguna) {
     throw new KesalahanTidakDitemukan('Pengguna tidak ditemukan');
   }
-  if (pengguna.peran === 'admin') {
+  if (pengguna.peran === 'admin' && pengguna.id !== pemintaId) {
     throw new KesalahanOtorisasi('Akun admin desa tidak dapat diubah di sini');
   }
 
@@ -272,7 +321,20 @@ export async function ubahUsernameOlehAdmin(
   if (!penggunaBaru) {
     throw new KesalahanTidakDitemukan('Pengguna tidak ditemukan');
   }
-  return penggunaBaru;
+  return perkayaFotoProfil(penggunaBaru);
+}
+
+/**
+ * Mengambil kontak admin untuk publik (halaman login/register).
+ * Tidak butuh autentikasi. Jika tidak ada admin dengan nomor_hp,
+ * kembalikan null agar frontend bisa fallback.
+ */
+export async function ambilKontakAdmin(): Promise<{
+  nomorHp: string | null;
+  namaLengkap: string | null;
+} | null> {
+  const kontak = await cariKontakAdmin();
+  return kontak;
 }
 
 /** Admin desa menghapus pengguna publikasi. */

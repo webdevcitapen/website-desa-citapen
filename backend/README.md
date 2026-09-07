@@ -181,11 +181,8 @@ npm run test:stress      # pengujian tekanan (koneksi tinggi)
    `DATABASE_URL` (dari Supabase), `JWT_RAHASIA` (acak, panjang),
    `ASAL_DIIZINKAN` (mis. `https://desa-citapen.vercel.app`), dan lainnya.
 
-> **Catatan tentang unggahan** — berkas yang diunggah disimpan di folder
-> `unggahan/` pada sistem berkas. Di Render, sistem berkas bersifat sementara
-> (hilang saat instance dimulai ulang). Untuk foto yang harus permanen,
-> gunakan layanan penyimpanan objek (mis. Supabase Storage) atau volume disk
-> Render, lalu ubah fungsi penyimpanan di `src/utils/berkas.ts`.
+> **Catatan tentang unggahan** — **FIX VERCEL 2026**: Vercel filesystem bersifat ephemeral (`/tmp` hilang tiap cold start / beda instance), sehingga gambar yang diunggah sebelum fix **pasti 404**. Backend sekarang mendukung **Supabase Storage persisten** (lihat `.env.example` variabel `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`). Jika `SUPABASE_URL` diisi, semua unggahan (profil, produk, berita, galeri, umkm) disimpan ke Supabase Storage dan dilayani via proxy `/unggahan` yang tetap kompatibel dengan frontend (`getImageUrl` tanpa perubahan). Jika kosong, fallback ke filesystem lokal (`unggahan/` atau `/tmp/unggahan` di Vercel, cocok untuk dev).  
+> Penyebab lain yang diperbaiki: route sebelumnya `app.use(\`/${FOLDER_UNGGUHAN}\`, ...)` menjadi `//tmp/unggahan` di Vercel sehingga request frontend `/unggahan/...` tidak pernah cocok — sekarang selalu `'/unggahan'`.
 
 ## Struktur Direktori
 

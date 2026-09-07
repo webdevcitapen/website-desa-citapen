@@ -14,6 +14,7 @@ import {
   daftarkanPenggunaOlehAdmin,
   hapusPenggunaOlehAdmin,
   ubahKataSandiOlehAdmin,
+  ubahProfilOlehAdmin,
   ubahUsernameOlehAdmin,
 } from '../layanan/pengguna-layanan.js';
 import type { Peran } from '../types/index.js';
@@ -89,8 +90,9 @@ export const ubahKataSandiPengguna = bungkusHandler(
   async (permintaan: Request, tanggapan: Response, _berikutnya: NextFunction) => {
     const { id } = permintaan.params as { id: string };
     const { kataSandiBaru } = permintaan.body as { kataSandiBaru: string };
+    const pemintaId = permintaan.pengguna?.id;
 
-    await ubahKataSandiOlehAdmin(Number(id), kataSandiBaru);
+    await ubahKataSandiOlehAdmin(Number(id), kataSandiBaru, pemintaId);
 
     kirimSukses(tanggapan, null, 'Kata sandi pengguna berhasil diubah');
   },
@@ -101,9 +103,27 @@ export const ubahUsernamePengguna = bungkusHandler(
   async (permintaan: Request, tanggapan: Response, _berikutnya: NextFunction) => {
     const { id } = permintaan.params as { id: string };
     const { usernameBaru } = permintaan.body as { usernameBaru: string };
+    const pemintaId = permintaan.pengguna?.id;
 
-    const pengguna = await ubahUsernameOlehAdmin(Number(id), usernameBaru);
+    const pengguna = await ubahUsernameOlehAdmin(Number(id), usernameBaru, pemintaId);
 
     kirimSukses(tanggapan, pengguna, 'Username pengguna berhasil diubah');
+  },
+);
+
+/** Menangani permintaan ubah profil pengguna oleh admin desa. */
+export const ubahProfilPengguna = bungkusHandler(
+  async (permintaan: Request, tanggapan: Response, _berikutnya: NextFunction) => {
+    const { id } = permintaan.params as { id: string };
+    const data = permintaan.body as {
+      namaLengkap: string;
+      email: string | null;
+      nomorHp: string | null;
+    };
+    const pemintaId = permintaan.pengguna?.id;
+
+    const pengguna = await ubahProfilOlehAdmin(Number(id), data, pemintaId);
+
+    kirimSukses(tanggapan, pengguna, 'Profil pengguna berhasil diubah');
   },
 );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Map, Image as ImageIcon } from 'lucide-react';
+import { Map, Image as ImageIcon, X } from 'lucide-react';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BottomNav from '../../components/layout/BottomNav';
@@ -11,6 +11,7 @@ export default function ProfilDesa() {
   const [riwayatKades, setRiwayatKades] = useState<any[]>([]);
   const [galeri, setGaleri] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSejarahModalOpen, setIsSejarahModalOpen] = useState(false);
 
   // Fallback statis jika backend belum ada data sejarah/visi/misi
   const SEJARAH_FALLBACK = `Sejarah Desa Citapen bermula dari sebuah pemukiman kecil di lereng bukit yang berkembang berkat gotong royong masyarakat. Secara administratif, Desa Citapen terus berbenah dan berkembang menjadi desa mandiri yang mempertahankan nilai-nilai luhur dan budaya lokal. Berbagai pembangunan fisik dan non-fisik telah dilakukan untuk menunjang kehidupan warga.`;
@@ -144,11 +145,20 @@ export default function ProfilDesa() {
 
         <div className="text-center mb-10">
           <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Profil {NAMA_DESA}</p>
-          <h2 className="text-3xl lg:text-4xl font-bold text-slate-800">SEJARAH SINGKAT</h2>
+          <h2 className="text-3xl lg:text-4xl font-bold text-slate-800">SEJARAH DESA</h2>
         </div>
 
-        <div className="text-left text-[15px] text-slate-600 space-y-5 leading-relaxed font-medium whitespace-pre-line">
+        <div className="text-left text-[15px] text-slate-600 leading-relaxed font-medium whitespace-pre-line line-clamp-4">
           {sejarahTampil}
+        </div>
+        <div className="flex justify-center mt-6">
+          <button
+            type="button"
+            onClick={() => setIsSejarahModalOpen(true)}
+            className="text-sm font-bold text-[#0A3D2D] border border-[#0A3D2D] rounded-xl px-5 py-2.5 hover:bg-[#0A3D2D] hover:text-white transition-colors"
+          >
+            Baca selengkapnya
+          </button>
         </div>
       </section>
 
@@ -262,7 +272,6 @@ export default function ProfilDesa() {
                 <h3 className="font-bold text-slate-800 text-sm mb-1">{org.nama}</h3>
                 <p className="text-xs text-[#0A3D2D] font-bold mb-1">{org.jabatan}</p>
                 {org.keterangan && <p className="text-[10px] text-slate-400 line-clamp-2">{org.keterangan}</p>}
-                <p className="text-[10px] text-slate-300 mt-2">Urutan {org.urutan}</p>
               </div>
             ))}
             {organisasi.length === 0 && (
@@ -354,6 +363,32 @@ export default function ProfilDesa() {
           )}
         </div>
       </section>
+
+      {isSejarahModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4"
+          onClick={() => setIsSejarahModalOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sejarah-modal-title"
+            className="relative max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label="Tutup sejarah desa"
+              onClick={() => setIsSejarahModalOpen(false)}
+              className="absolute right-4 top-4 rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <h2 id="sejarah-modal-title" className="pr-10 text-2xl font-bold text-[#0A3D2D]">Sejarah Desa</h2>
+            <p className="mt-6 whitespace-pre-line text-[15px] leading-relaxed text-slate-600">{sejarahTampil}</p>
+          </div>
+        </div>
+      )}
 
       <Footer profil={{ nama_desa: NAMA_DESA }} />
       <BottomNav />

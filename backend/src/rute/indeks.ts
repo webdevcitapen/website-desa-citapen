@@ -14,6 +14,7 @@ import { ruteStrukturOrganisasi } from './struktur-organisasi-rute.js';
 import { ruteRiwayatKuwu } from './riwayat-kuwu-rute.js';
 import { ruteGaleri } from './galeri-rute.js';
 import { ruteUmkm } from './umkm-rute.js';
+import { ruteKontak } from './kontak-rute.js';
 import { ambilBeranda, periksaKesehatan } from '../pengendali/kesehatan-pengendali.js';
 import { kirimSukses } from '../utils/respons.js';
 
@@ -68,3 +69,7 @@ ruteUtama.use('/galeri', ruteGaleri);
 
 // Kelompok rute UMKM (daftar nama UMKM dengan nomor hp & alamat)
 ruteUtama.use('/umkm', ruteUmkm);
+
+// Kelompok rute kontak admin publik (WhatsApp pendaftaran)
+// Endpoint: GET /api/kontak-admin
+ruteUtama.use('/kontak-admin', ruteKontak);

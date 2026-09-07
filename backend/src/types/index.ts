@@ -46,6 +46,7 @@ export interface DataBerita {
   judul: string;
   isi: string;
   gambar: string | null;
+  kategori: string;
   penulis: DataPenulis | null;
   dibuatPada: Date;
   diperbaruiPada: Date;
@@ -140,6 +141,8 @@ export interface DataStrukturOrganisasi {
   jabatan: string;
   urutan: number;
   foto: string | null;
+  inisial: string;
+  warnaAvatar: string;
   dibuatPada: Date;
   diperbaruiPada: Date;
 }
@@ -179,6 +182,12 @@ export interface DataUmkm {
   diperbaruiPada: Date;
 }
 
+/** Data kontak admin untuk publik (WhatsApp pendaftaran). */
+export interface DataKontakAdmin {
+  nomorHp: string | null;
+  namaLengkap: string | null;
+}
+
 /** Data ringkas untuk halaman beranda aplikasi. */
 export interface DataBeranda {
   beritaTerbaru: DataBerita[];
@@ -187,6 +196,7 @@ export interface DataBeranda {
   jumlahProduk: number;
   jumlahUmkm: number;
   kesehatanDatabase: boolean;
+  kontakAdmin: DataKontakAdmin | null;
 }
 
 /** Perluasan tipe request express agar menyimpan data pengguna terautentikasi. */

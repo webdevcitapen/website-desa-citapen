@@ -9,6 +9,7 @@ import { bandingkanKataSandi, hashKataSandi } from '../utils/sandi.js';
 import { buatToken } from '../utils/token.js';
 import { KesalahanAutentikasi } from '../utils/kesalahan.js';
 import { logger } from '../utils/logger.js';
+import { dapatkanUrlBerkasUntukKlien } from '../utils/berkas.js';
 import {
   buatPengguna,
   hitungAdminDesa,
@@ -43,18 +44,18 @@ export async function masukPengguna(
     );
   }
 
-  // Pastikan akun pengguna masih aktif
-  if (!barisPengguna.status_aktif) {
+  // Pastikan akun pengguna masih aktif (drizzle: statusAktif)
+  if (!barisPengguna.statusAktif) {
     throw new KesalahanAutentikasi(
       'Akun Anda dinonaktifkan, hubungi admin desa',
       'AKUN_NONAKTIF',
     );
   }
 
-  // Bandingkan kata sandi yang dikirim dengan hash di database
+  // Bandingkan kata sandi yang dikirim dengan hash di database (drizzle: kataSandiHash)
   const kataSandiBenar = await bandingkanKataSandi(
     kataSandi,
-    barisPengguna.kata_sandi_hash,
+    barisPengguna.kataSandiHash,
   );
   if (!kataSandiBenar) {
     throw new KesalahanAutentikasi(
@@ -64,7 +65,7 @@ export async function masukPengguna(
   }
 
   // Buat token untuk pengguna yang berhasil masuk
-  const token = buatToken({ id: Number(barisPengguna.id), peran: barisPengguna.peran });
+  const token = buatToken({ id: Number(barisPengguna.id), peran: barisPengguna.peran as import('../types/index.js').Peran });
 
   logger.info(
     { penggunaId: Number(barisPengguna.id), peran: barisPengguna.peran },
@@ -76,13 +77,13 @@ export async function masukPengguna(
     pengguna: {
       id: Number(barisPengguna.id),
       username: barisPengguna.username,
-      namaLengkap: barisPengguna.nama_lengkap,
+      namaLengkap: barisPengguna.namaLengkap,
       email: barisPengguna.email,
-      nomorHp: barisPengguna.nomor_hp,
-      fotoProfil: barisPengguna.foto_profil,
-      peran: barisPengguna.peran,
-      statusAktif: barisPengguna.status_aktif,
-      dibuatPada: barisPengguna.dibuat_pada,
+      nomorHp: barisPengguna.nomorHp,
+      fotoProfil: dapatkanUrlBerkasUntukKlien(barisPengguna.fotoProfil) as string | null,
+      peran: barisPengguna.peran as import('../types/index.js').Peran,
+      statusAktif: barisPengguna.statusAktif,
+      dibuatPada: barisPengguna.dibuatPada,
     },
   };
 }
@@ -96,7 +97,10 @@ export async function ambilProfilSaatIni(id: number): Promise<DataPengguna> {
       'PENGGUNA_TIDAK_DITEMUKAN',
     );
   }
-  return pengguna;
+  return {
+    ...pengguna,
+    fotoProfil: dapatkanUrlBerkasUntukKlien(pengguna.fotoProfil) as string | null,
+  };
 }
 
 /**

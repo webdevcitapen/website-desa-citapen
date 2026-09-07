@@ -15,7 +15,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict udoYsBSz3AefJUiWlYdN5lJYpa1Qs5suKR14exK46wcWYHAsgNx72a9eY0gxv7Q
+\restrict rfksQeanfXAvaTrG0534UOYOitvQ82gzPzEX4bFB2a0bE3QD84vCsZvuczK44K9
 
 -- Dumped from database version 18.6 (Homebrew)
 -- Dumped by pg_dump version 18.6 (Homebrew)
@@ -51,6 +51,7 @@ DROP INDEX IF EXISTS public.idx_pengguna_peran;
 DROP INDEX IF EXISTS public.idx_kategori_pemilik;
 DROP INDEX IF EXISTS public.idx_galeri_urutan;
 DROP INDEX IF EXISTS public.idx_galeri_dibuat_pada;
+DROP INDEX IF EXISTS public.idx_berita_kategori;
 DROP INDEX IF EXISTS public.idx_berita_penulis;
 DROP INDEX IF EXISTS public.idx_berita_dibuat_pada;
 ALTER TABLE IF EXISTS ONLY public.umkm DROP CONSTRAINT IF EXISTS umkm_pkey;
@@ -103,9 +104,11 @@ CREATE TABLE public.berita (
     judul character varying(200) NOT NULL,
     isi text NOT NULL,
     gambar character varying(255),
+    kategori character varying(50) DEFAULT 'Umum'::character varying NOT NULL,
     penulis_id bigint,
     dibuat_pada timestamp with time zone DEFAULT now() NOT NULL,
-    diperbarui_pada timestamp with time zone DEFAULT now() NOT NULL
+    diperbarui_pada timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT berita_kategori_check CHECK (((kategori)::text = ANY ((ARRAY['Umum'::character varying, 'Infrastruktur'::character varying, 'Kesehatan'::character varying, 'Pendidikan'::character varying, 'Pertanian'::character varying, 'Ekonomi'::character varying, 'Sosial'::character varying, 'Budaya'::character varying])::text[])))
 );
 
 
@@ -243,7 +246,7 @@ CREATE TABLE public.produk (
     deskripsi text NOT NULL,
     foto character varying(255),
     pemilik_id bigint NOT NULL,
-    kategori_id bigint,
+    kategori_id bigint NOT NULL,
     dibuat_pada timestamp with time zone DEFAULT now() NOT NULL,
     diperbarui_pada timestamp with time zone DEFAULT now() NOT NULL,
     umkm_id bigint,
@@ -455,7 +458,7 @@ ALTER TABLE ONLY public.umkm ALTER COLUMN id SET DEFAULT nextval('public.umkm_id
 -- Data for Name: berita; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.berita (id, judul, isi, gambar, penulis_id, dibuat_pada, diperbarui_pada) FROM stdin;
+COPY public.berita (id, judul, isi, gambar, kategori, penulis_id, dibuat_pada, diperbarui_pada) FROM stdin;
 \.
 
 
@@ -464,7 +467,6 @@ COPY public.berita (id, judul, isi, gambar, penulis_id, dibuat_pada, diperbarui_
 --
 
 COPY public.galeri_desa (id, judul, keterangan, foto, urutan, dibuat_pada, diperbarui_pada) FROM stdin;
-2	sgsdgsgsd	gdsgdsdgsgds	galeri/mtmqt329-1dea8d02303d.png	1	2026-09-04 16:19:40.74119+07	2026-09-04 16:19:40.74119+07
 \.
 
 
@@ -481,8 +483,7 @@ COPY public.kategori_produk (id, nama, pemilik_id, dibuat_pada) FROM stdin;
 --
 
 COPY public.pengguna (id, username, kata_sandi_hash, nama_lengkap, email, nomor_hp, foto_profil, peran, status_aktif, dibuat_pada, diperbarui_pada) FROM stdin;
-94	hafizh	$2a$10$S..hH04RY3rPfVP2UkMw2.1plFuqDbmfKRpOqTNSBJPrrO3rgc8QS	hafizh	\N	\N	profil/mtmp7m80-465050625faa.png	publikasi	t	2026-09-04 14:18:21.908305+07	2026-09-04 15:35:00.580701+07
-1	admin	$2a$10$5Zs6trGkwyXGh36cM7XC6.CYq1ottbIPPnPJKvnSSg7ajJSzlNm4G	Administrator Desa Citapen	\N	\N	profil/mtmp6xjk-5e85431ca429.png	admin	t	2026-09-04 08:05:16.122589+07	2026-09-04 15:34:29.270192+07
+1	admin	$2a$10$A5TESFSy91/VtoI4t75GnufSny37yQwuqoybrmK/P1SopeX5PNn42	Admin Desa Citapen	admin@citapen.id	082118219999	profil/mtn2ew6h-ff8457701407.png	admin	t	2026-09-04 08:05:16.122589+07	2026-09-04 22:55:51.883854+07
 \.
 
 
@@ -499,7 +500,7 @@ COPY public.produk (id, nama, harga, deskripsi, foto, pemilik_id, kategori_id, d
 --
 
 COPY public.profil_desa (id, luas_wilayah, batas_utara, batas_selatan, batas_barat, batas_timur, letak_geografis, deskripsi_wilayah, sejarah, visi, misi, diperbarui_pada) FROM stdin;
-1	473,300 Ha	Desa Tundangan	Desa Pakembangan	Kecamatan Ciniru	Kecamatan Maleber	Desa Citapen terletak di Kecamatan Hantara, Kabupaten Kuningan, Provinsi Jawa Barat.	Desa Citapen memiliki luas 473,300 Ha dengan topografi perbukitan dan potensi pertanian serta wisata alam.	Kata "CITAPEN" yaitu berasal dari kata "CIPATAPAAN" yang mengandung arti kata Air Suci Untuk Bertapa itu menurut legenda ataupun cerita secara turun temurun. Pada jaman dahulu datang 3 orang tokoh yang mengembara dan sampailah di wilayah yang sekarang menjadi Desa Citapen yaitu Buyut Kerti Parana, Embah Suradita, dan Buyut Jambul.1	Terwujudnya Tata Kelola Pemerintahan Yang Bersih, Jujur, Transparan Inovatif Dan Akuntable Menuju Desa Citapen Yang Maju, Sejahtera, Dan Berbudaya	1. Melanjutkan Program-Program Terdahulu Yang Dianggap Lebih Bermanfaat Bagi Masyarakat.\n2. Meningkatkan Pembangunan: Jalan Desa, Jalan Lingkungan, Jalan Usaha Tani, dan Perluasan Permukiman\n3. Penataan Lingkungan Kantor Pemerintahan Desa\n4. Pemberdayaan Sumber Daya Alam Untuk Mencapai Kemakmuran dan Kesejahteraan Masyarakat.	2026-09-04 15:42:39.282415+07
+1	473,300 Ha	Desa Tundangan	Desa Pakembangan	Kecamatan Ciniru	Kecamatan Maleber	Desa Citapen terletak di Kecamatan Hantara, Kabupaten Kuningan, Provinsi Jawa Barat.	Desa Citapen memiliki luas 473,300 Ha dengan topografi perbukitan dan potensi pertanian serta wisata alam.	Kata "CITAPEN" yaitu berasal dari kata "CIPATAPAAN" yang mengandung arti kata Air Suci Untuk Bertapa itu menurut legenda ataupun cerita secara turun temurun. Pada jaman dahulu datang 3 orang tokoh yang mengembara dan sampailah di wilayah yang sekarang menjadi Desa Citapen yaitu Buyut Kerti Parana, Embah Suradita, dan Buyut Jambul.	Terwujudnya Tata Kelola Pemerintahan Yang Bersih, Jujur, Transparan Inovatif Dan Akuntable Menuju Desa Citapen Yang Maju, Sejahtera, Dan Berbudaya	1. Melanjutkan Program-Program Terdahulu Yang Dianggap Lebih Bermanfaat Bagi Masyarakat.\n2. Meningkatkan Pembangunan: Jalan Desa, Jalan Lingkungan, Jalan Usaha Tani, dan Perluasan Permukiman\n3. Penataan Lingkungan Kantor Pemerintahan Desa\n4. Pemberdayaan Sumber Daya Alam Untuk Mencapai Kemakmuran dan Kesejahteraan Masyarakat.	2026-09-04 21:28:42.894294+07
 \.
 
 
@@ -563,56 +564,56 @@ COPY public.umkm (id, nama, nomor_hp, alamat, deskripsi, foto, pemilik_id, dibua
 -- Name: berita_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.berita_id_seq', 100, true);
+SELECT pg_catalog.setval('public.berita_id_seq', 154, true);
 
 
 --
 -- Name: galeri_desa_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.galeri_desa_id_seq', 2, true);
+SELECT pg_catalog.setval('public.galeri_desa_id_seq', 3, true);
 
 
 --
 -- Name: kategori_produk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.kategori_produk_id_seq', 28, true);
+SELECT pg_catalog.setval('public.kategori_produk_id_seq', 45, true);
 
 
 --
 -- Name: pengguna_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.pengguna_id_seq', 95, true);
+SELECT pg_catalog.setval('public.pengguna_id_seq', 147, true);
 
 
 --
 -- Name: produk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.produk_id_seq', 60, true);
+SELECT pg_catalog.setval('public.produk_id_seq', 91, true);
 
 
 --
 -- Name: riwayat_kuwu_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.riwayat_kuwu_id_seq', 22, true);
+SELECT pg_catalog.setval('public.riwayat_kuwu_id_seq', 23, true);
 
 
 --
 -- Name: struktur_organisasi_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.struktur_organisasi_id_seq', 10, true);
+SELECT pg_catalog.setval('public.struktur_organisasi_id_seq', 11, true);
 
 
 --
 -- Name: umkm_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.umkm_id_seq', 1, false);
+SELECT pg_catalog.setval('public.umkm_id_seq', 3, true);
 
 
 --
@@ -722,6 +723,7 @@ CREATE INDEX idx_berita_dibuat_pada ON public.berita USING btree (dibuat_pada DE
 -- Name: idx_berita_penulis; Type: INDEX; Schema: public; Owner: -
 --
 
+CREATE INDEX idx_berita_kategori ON public.berita USING btree (kategori);
 CREATE INDEX idx_berita_penulis ON public.berita USING btree (penulis_id);
 
 
@@ -837,7 +839,7 @@ ALTER TABLE ONLY public.kategori_produk
 --
 
 ALTER TABLE ONLY public.produk
-    ADD CONSTRAINT produk_kategori_id_fkey FOREIGN KEY (kategori_id) REFERENCES public.kategori_produk(id) ON DELETE SET NULL;
+    ADD CONSTRAINT produk_kategori_id_fkey FOREIGN KEY (kategori_id) REFERENCES public.kategori_produk(id) ON DELETE RESTRICT;
 
 
 --
@@ -868,5 +870,5 @@ ALTER TABLE ONLY public.umkm
 -- PostgreSQL database dump complete
 --
 
-\unrestrict udoYsBSz3AefJUiWlYdN5lJYpa1Qs5suKR14exK46wcWYHAsgNx72a9eY0gxv7Q
+\unrestrict rfksQeanfXAvaTrG0534UOYOitvQ82gzPzEX4bFB2a0bE3QD84vCsZvuczK44K9
 

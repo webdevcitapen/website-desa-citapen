@@ -12,8 +12,8 @@ import { buatMiddlewareUnggah } from '../middleware/unggah-berkas.js';
 import { validasiBadan, validasiParameter, validasiQuery } from '../middleware/validasi.js';
 import {
   SkemaBerita,
+  SkemaDaftarBerita,
   SkemaIdRute,
-  SkemaPaginasi,
 } from '../validasi/skema.js';
 import {
   buatBerita,
@@ -26,8 +26,8 @@ import {
 /** Rute berita. */
 export const ruteBerita = Router();
 
-// Daftar berita untuk publik
-ruteBerita.get('/', validasiQuery(SkemaPaginasi), daftarBerita);
+// Daftar berita untuk publik (dukung filter kategori)
+ruteBerita.get('/', validasiQuery(SkemaDaftarBerita), daftarBerita);
 
 // Detail berita untuk publik
 ruteBerita.get('/:id', validasiParameter(SkemaIdRute), detailBerita);

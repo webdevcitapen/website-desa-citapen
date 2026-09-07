@@ -12,7 +12,7 @@ import {
   KesalahanTidakDitemukan,
 } from '../utils/kesalahan.js';
 import { kompresGambar } from '../utils/kompresi-gambar.js';
-import { hapusBerkas, simpanBerkas } from '../utils/berkas.js';
+import { hapusBerkas, simpanBerkas, dapatkanUrlBerkasUntukKlien } from '../utils/berkas.js';
 import { logger } from '../utils/logger.js';
 import {
   buatProduk as buatProdukRepositori,
@@ -22,7 +22,11 @@ import {
   perbaruiProduk,
   temukanProdukBerdasarkanId,
 } from '../repositori/produk-repositori.js';
-import { temukanKategoriBerdasarkanId } from '../repositori/kategori-repositori.js';
+import {
+  buatKategori as buatKategoriRepositori,
+  daftarKategori as daftarKategoriRepositori,
+  temukanKategoriBerdasarkanId,
+} from '../repositori/kategori-repositori.js';
 import { temukanUmkmBerdasarkanId } from '../repositori/umkm-repositori.js';
 import type { HasilPaginasi } from '../types/index.js';
 import { hitungTotalHalaman } from '../utils/paginasi.js';
@@ -45,6 +49,7 @@ export interface ParameterDaftarProdukLayanan {
   kategoriId?: number;
   pemilikId?: number;
   umkmId?: number;
+  cari?: string;
 }
 
 /** Memeriksa bahwa kategori produk ada dan boleh dipakai. */
@@ -68,6 +73,48 @@ async function pastikanKategoriMilikPemilik(
   if (kategori.pemilikId !== pemilikId) {
     throw new KesalahanOtorisasi('Kategori tersebut bukan milik Anda');
   }
+}
+
+/**
+ * Mendapatkan atau membuat kategori default "Umum" untuk pemilik tertentu.
+ * Dipakai untuk memperbaiki produk lama dengan kategori NULL dan untuk
+ * memastikan validasi NOT NULL di database selalu terpenuhi.
+ */
+async function dapatkanKategoriDefaultId(pemilikId: number): Promise<number> {
+  const daftar = await daftarKategoriRepositori();
+  // Cari kategori Umum milik pemilikId terlebih dulu
+  const milikSendiri = daftar.find(
+    (k) => k.nama.toLowerCase() === 'umum' && k.pemilikId === pemilikId,
+  );
+  if (milikSendiri) {
+    return milikSendiri.id;
+  }
+  // Jika tidak ada, coba pakai kategori Umum milik siapapun (fallback global)
+  const globalUmum = daftar.find((k) => k.nama.toLowerCase() === 'umum');
+  if (globalUmum) {
+    return globalUmum.id;
+  }
+  // Jika belum ada sama sekali, buat kategori Umum baru untuk pemilik ini
+  const baru = await buatKategoriRepositori({ nama: 'Umum', pemilikId });
+  logger.info({ kategoriId: baru.id, pemilikId }, 'Kategori default Umum berhasil dibuat');
+  return baru.id;
+}
+
+/**
+ * Menyelesaikan id kategori yang akan disimpan.
+ * Jika kategoriId kosong, kembalikan id kategori default "Umum".
+ * Jika terisi, validasi kepemilikan dan kembalikan id tersebut.
+ */
+async function selesaikanKategoriId(
+  kategoriId: number | null | undefined,
+  pemilikId: number,
+  peran?: Peran,
+): Promise<number> {
+  if (kategoriId === null || kategoriId === undefined) {
+    return dapatkanKategoriDefaultId(pemilikId);
+  }
+  await pastikanKategoriMilikPemilik(kategoriId, pemilikId, peran);
+  return kategoriId;
 }
 
 /** Memeriksa bahwa UMKM ada jika umkmId dikirim. */
@@ -107,6 +154,8 @@ async function siapkanFotoProduk(
 /**
  * Membuat produk baru oleh admin desa.
  * Foto bersifat opsional; jika diunggah akan dikompres otomatis.
+ * Kategori bersifat wajib di database (NOT NULL); jika tidak dikirim,
+ * otomatis memakai kategori default "Umum".
  */
 export async function tambahProduk(
   pemilikId: number,
@@ -114,7 +163,7 @@ export async function tambahProduk(
   berkasFoto?: BerkasUnggahan,
   peran?: Peran,
 ): Promise<DataProduk> {
-  await pastikanKategoriMilikPemilik(data.kategoriId ?? null, pemilikId, peran);
+  const kategoriIdFinal = await selesaikanKategoriId(data.kategoriId ?? null, pemilikId, peran);
   await pastikanUmkmAda(data.umkmId ?? null);
 
   let foto: string | null = null;
@@ -126,7 +175,7 @@ export async function tambahProduk(
       deskripsi: data.deskripsi,
       foto,
       pemilikId,
-      kategoriId: data.kategoriId ?? null,
+      kategoriId: kategoriIdFinal,
       umkmId: data.umkmId ?? null,
     });
 
@@ -135,7 +184,7 @@ export async function tambahProduk(
       'Produk baru berhasil dibuat',
     );
 
-    return produk;
+    return perkayaFotoProduk(produk);
   } catch (kesalahan) {
     if (foto) {
       await hapusBerkas(foto);
@@ -144,22 +193,35 @@ export async function tambahProduk(
   }
 }
 
+/** Mengubah path foto produk menjadi URL CDN jika Supabase aktif. */
+function perkayaFotoProduk<T extends { foto: string | null }>(item: T): T {
+  return {
+    ...item,
+    foto: dapatkanUrlBerkasUntukKlien(item.foto) as T['foto'],
+  };
+}
+
 /** Mengambil daftar produk dengan paginasi untuk publik. */
 export async function ambilDaftarProduk(
   parameter: ParameterDaftarProdukLayanan,
 ): Promise<HasilPaginasi<DataProduk>> {
-  const daftar = await daftarProdukRepositori({
-    batas: parameter.batas,
-    lewati: parameter.lewati,
-    kategoriId: parameter.kategoriId,
-    pemilikId: parameter.pemilikId,
-    umkmId: parameter.umkmId,
-  });
+  // Parallelkan 2 query agar waktu respons setengah
+  const [daftar, total] = await Promise.all([
+    daftarProdukRepositori({
+      batas: parameter.batas,
+      lewati: parameter.lewati,
+      kategoriId: parameter.kategoriId,
+      pemilikId: parameter.pemilikId,
+      umkmId: parameter.umkmId,
+      cari: parameter.cari,
+    }),
+    hitungProduk(parameter.kategoriId, parameter.pemilikId, parameter.umkmId, parameter.cari),
+  ]);
 
-  const total = await hitungProduk(parameter.kategoriId, parameter.pemilikId, parameter.umkmId);
+  const daftarDenganUrl = daftar.map(perkayaFotoProduk);
 
   return {
-    daftar,
+    daftar: daftarDenganUrl,
     halaman: parameter.halaman,
     perHalaman: parameter.perHalaman,
     total,
@@ -173,7 +235,7 @@ export async function ambilDetailProduk(id: number): Promise<DataProduk> {
   if (!produk) {
     throw new KesalahanTidakDitemukan('Produk tidak ditemukan');
   }
-  return produk;
+  return perkayaFotoProduk(produk);
 }
 
 /** Mengubah produk oleh admin desa (full akses). */
@@ -194,7 +256,19 @@ export async function ubahProduk(
     throw new KesalahanOtorisasi('Anda hanya dapat mengubah produk milik Anda');
   }
 
-  await pastikanKategoriMilikPemilik(data.kategoriId ?? null, pemilikId, peran);
+  // Jika kategori tidak dikirim, pertahankan kategori lama; jika null tetap fallback ke default
+  const kategoriIdInput = data.kategoriId;
+  let kategoriIdFinal: number;
+  if (kategoriIdInput === null || kategoriIdInput === undefined) {
+    // Pertahankan kategori lama jika ada, jika tidak ada (produk lama NULL) pakai default
+    if (produk.kategori?.id) {
+      kategoriIdFinal = produk.kategori.id;
+    } else {
+      kategoriIdFinal = await dapatkanKategoriDefaultId(pemilikId);
+    }
+  } else {
+    kategoriIdFinal = await selesaikanKategoriId(kategoriIdInput, pemilikId, peran);
+  }
   await pastikanUmkmAda(data.umkmId ?? null);
 
   let foto = produk.foto;
@@ -205,7 +279,7 @@ export async function ubahProduk(
       harga: data.harga ?? 0,
       deskripsi: data.deskripsi,
       foto,
-      kategoriId: data.kategoriId ?? null,
+      kategoriId: kategoriIdFinal,
       umkmId: data.umkmId ?? null,
     });
 
@@ -214,7 +288,7 @@ export async function ubahProduk(
       'Produk berhasil diperbarui',
     );
 
-    return produkDiperbarui;
+    return perkayaFotoProduk(produkDiperbarui);
   } catch (kesalahan) {
     if (berkasFoto && foto !== produk.foto && foto) {
       await hapusBerkas(foto);

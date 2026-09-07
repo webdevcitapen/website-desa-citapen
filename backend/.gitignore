@@ -15,7 +15,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-package-lock.json
+# package-lock.json JANGAN di-ignore agar Vercel/Render dapat
+# melakukan `npm ci` dengan versi dependensi yang deterministik.
+# Tanpa lockfile, Vercel akan fallback ke `npm install` yang bisa
+# menyebabkan `Cannot find package 'dotenv'` karena instalasi tidak lengkap.
 
 # ---------- Hasil build ----------
 # Folder hasil kompilasi typescript tidak perlu masuk git

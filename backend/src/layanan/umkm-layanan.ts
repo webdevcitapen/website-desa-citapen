@@ -10,7 +10,7 @@ import {
   KesalahanTidakDitemukan,
 } from '../utils/kesalahan.js';
 import { kompresGambar } from '../utils/kompresi-gambar.js';
-import { hapusBerkas, simpanBerkas } from '../utils/berkas.js';
+import { hapusBerkas, simpanBerkas, dapatkanUrlBerkasUntukKlien } from '../utils/berkas.js';
 import { logger } from '../utils/logger.js';
 import {
   buatUmkm as buatUmkmRepo,
@@ -30,10 +30,18 @@ export interface DataSimpanUmkm {
   deskripsi: string | null;
 }
 
+/** Mengubah path foto UMKM menjadi URL CDN. */
+function perkayaFotoUmkm<T extends { foto: string | null }>(item: T): T {
+  return {
+    ...item,
+    foto: dapatkanUrlBerkasUntukKlien(item.foto) as T['foto'],
+  };
+}
+
 /** Mengambil daftar UMKM untuk publik dan admin. */
 export async function ambilDaftarUmkm(): Promise<DataUmkm[]> {
   const daftar = await daftarUmkmRepo();
-  return daftar.map((item) => ({
+  return daftar.map((item) => perkayaFotoUmkm({
     id: item.id,
     nama: item.nama,
     nomorHp: item.nomorHp,
@@ -52,7 +60,7 @@ export async function ambilDetailUmkm(id: number): Promise<DataUmkm> {
   if (!umkm) {
     throw new KesalahanTidakDitemukan('UMKM tidak ditemukan');
   }
-  return {
+  return perkayaFotoUmkm({
     id: umkm.id,
     nama: umkm.nama,
     nomorHp: umkm.nomorHp,
@@ -62,7 +70,7 @@ export async function ambilDetailUmkm(id: number): Promise<DataUmkm> {
     pemilikId: umkm.pemilikId,
     dibuatPada: umkm.dibuatPada,
     diperbaruiPada: umkm.diperbaruiPada,
-  };
+  });
 }
 
 /** Membuat UMKM baru oleh admin desa. */
@@ -95,7 +103,7 @@ export async function tambahUmkm(
 
     logger.info({ umkmId: umkm.id, nama: umkm.nama }, 'UMKM baru berhasil dibuat');
 
-    return {
+    return perkayaFotoUmkm({
       id: umkm.id,
       nama: umkm.nama,
       nomorHp: umkm.nomorHp,
@@ -105,7 +113,7 @@ export async function tambahUmkm(
       pemilikId: umkm.pemilikId,
       dibuatPada: umkm.dibuatPada,
       diperbaruiPada: umkm.diperbaruiPada,
-    };
+    });
   } catch (kesalahan) {
     if (foto) {
       await hapusBerkas(foto);
@@ -158,7 +166,7 @@ export async function ubahUmkm(
 
     logger.info({ umkmId: id }, 'UMKM berhasil diperbarui');
 
-    return {
+    return perkayaFotoUmkm({
       id: umkmDiperbarui.id,
       nama: umkmDiperbarui.nama,
       nomorHp: umkmDiperbarui.nomorHp,
@@ -168,7 +176,7 @@ export async function ubahUmkm(
       pemilikId: umkmDiperbarui.pemilikId,
       dibuatPada: umkmDiperbarui.dibuatPada,
       diperbaruiPada: umkmDiperbarui.diperbaruiPada,
-    };
+    });
   } catch (kesalahan) {
     if (fotoPerluHapusLama && fotoBaru && fotoBaru !== umkm.foto) {
       await hapusBerkas(fotoBaru);

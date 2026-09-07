@@ -15,6 +15,7 @@ import {
   ubahProduk,
 } from '../layanan/produk-layanan.js';
 import { KesalahanAutentikasi } from '../utils/kesalahan.js';
+import { tambahHeaderGuard } from '../utils/guard-form.js';
 
 /** Menangani pembuatan produk baru oleh admin desa. */
 export const buatProduk = bungkusHandler(
@@ -69,11 +70,14 @@ export const daftarProduk = bungkusHandler(
       pemilikId?: string;
       umkmId?: string;
       umkm_id?: string;
+      cari?: string;
+      q?: string;
     };
 
     const paginasi = buatParameterPaginasi(kueri.halaman, kueri.perHalaman);
 
     const umkmIdRaw = kueri.umkmId ?? kueri.umkm_id ?? undefined;
+    const cari = (kueri.cari ?? kueri.q ?? '').trim() || undefined;
 
     const hasil = await ambilDaftarProduk({
       halaman: paginasi.halaman,
@@ -83,6 +87,7 @@ export const daftarProduk = bungkusHandler(
       kategoriId: kueri.kategoriId ? Number(kueri.kategoriId) : undefined,
       pemilikId: kueri.pemilikId ? Number(kueri.pemilikId) : undefined,
       umkmId: umkmIdRaw ? Number(umkmIdRaw) : undefined,
+      cari,
     });
 
     kirimSukses(tanggapan, hasil, 'Daftar produk berhasil diambil');
@@ -95,6 +100,9 @@ export const detailProduk = bungkusHandler(
     const { id } = permintaan.params as { id: string };
 
     const produk = await ambilDetailProduk(Number(id));
+
+    // Guard: tambahkan ETag untuk mencegah overwrite bersamaan
+    tambahHeaderGuard(tanggapan, produk);
 
     kirimSukses(tanggapan, produk, 'Detail produk berhasil diambil');
   },

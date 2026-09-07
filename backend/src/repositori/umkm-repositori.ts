@@ -1,24 +1,12 @@
 /**
  * Repositori UMKM: semua query ke tabel umkm.
- * UMKM dikelola penuh oleh admin desa; publik boleh melihat daftar.
- * Setiap UMKM memiliki nama, nomor hp, alamat yang terisi otomatis saat menambah produk.
+ * Migrasi ke Drizzle ORM.
  */
 
-import { kumpulanKoneksi } from '../config/database.js';
+import { eq, desc, count, sql } from 'drizzle-orm';
+import { db } from '../config/database.js';
+import { umkm } from '../db/schema.js';
 import { KesalahanTidakDitemukan } from '../utils/kesalahan.js';
-
-/** Bentuk baris UMKM yang dikembalikan postgresql. */
-interface BarisUmkm {
-  id: string;
-  nama: string;
-  nomor_hp: string | null;
-  alamat: string | null;
-  deskripsi: string | null;
-  foto: string | null;
-  pemilik_id: string | null;
-  dibuat_pada: Date;
-  diperbarui_pada: Date;
-}
 
 /** Data untuk membuat atau memperbarui UMKM. */
 export interface DataUmkmTersimpan {
@@ -30,8 +18,8 @@ export interface DataUmkmTersimpan {
   pemilikId: number | null;
 }
 
-/** Mengubah baris UMKM dari database menjadi bentuk umum. */
-function ubahKeUmkm(baris: BarisUmkm): {
+/** Mengubah baris menjadi bentuk umum. */
+function ubahKeUmkm(baris: typeof umkm.$inferSelect): {
   id: number;
   nama: string;
   nomorHp: string | null;
@@ -43,15 +31,15 @@ function ubahKeUmkm(baris: BarisUmkm): {
   diperbaruiPada: Date;
 } {
   return {
-    id: Number(baris.id),
+    id: baris.id,
     nama: baris.nama,
-    nomorHp: baris.nomor_hp,
+    nomorHp: baris.nomorHp,
     alamat: baris.alamat,
     deskripsi: baris.deskripsi,
     foto: baris.foto,
-    pemilikId: baris.pemilik_id ? Number(baris.pemilik_id) : null,
-    dibuatPada: baris.dibuat_pada,
-    diperbaruiPada: baris.diperbarui_pada,
+    pemilikId: baris.pemilikId,
+    dibuatPada: baris.dibuatPada,
+    diperbaruiPada: baris.diperbaruiPada,
   };
 }
 
@@ -59,53 +47,45 @@ function ubahKeUmkm(baris: BarisUmkm): {
 export async function buatUmkm(
   data: DataUmkmTersimpan,
 ): Promise<ReturnType<typeof ubahKeUmkm>> {
-  const hasil = await kumpulanKoneksi.query<BarisUmkm>(
-    `INSERT INTO umkm (nama, nomor_hp, alamat, deskripsi, foto, pemilik_id)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, nama, nomor_hp, alamat, deskripsi, foto, pemilik_id, dibuat_pada, diperbarui_pada`,
-    [data.nama, data.nomorHp, data.alamat, data.deskripsi, data.foto, data.pemilikId],
-  );
-  return ubahKeUmkm(hasil.rows[0]);
+  const hasil = await db
+    .insert(umkm)
+    .values({
+      nama: data.nama,
+      nomorHp: data.nomorHp,
+      alamat: data.alamat,
+      deskripsi: data.deskripsi,
+      foto: data.foto,
+      pemilikId: data.pemilikId,
+    })
+    .returning();
+  return ubahKeUmkm(hasil[0]);
 }
 
 /** Mencari UMKM berdasarkan id. */
 export async function temukanUmkmBerdasarkanId(
   id: number,
 ): Promise<ReturnType<typeof ubahKeUmkm> | null> {
-  const hasil = await kumpulanKoneksi.query<BarisUmkm>(
-    `SELECT id, nama, nomor_hp, alamat, deskripsi, foto, pemilik_id, dibuat_pada, diperbarui_pada
-       FROM umkm
-      WHERE id = $1
-      LIMIT 1`,
-    [id],
-  );
-  const baris = hasil.rows[0];
-  return baris ? ubahKeUmkm(baris) : null;
+  const baris = await db.select().from(umkm).where(eq(umkm.id, id)).limit(1);
+  return baris[0] ? ubahKeUmkm(baris[0]) : null;
 }
 
 /** Mencari UMKM berdasarkan nama (untuk cek duplikat). */
 export async function temukanUmkmBerdasarkanNama(
   nama: string,
 ): Promise<ReturnType<typeof ubahKeUmkm> | null> {
-  const hasil = await kumpulanKoneksi.query<BarisUmkm>(
-    `SELECT id, nama, nomor_hp, alamat, deskripsi, foto, pemilik_id, dibuat_pada, diperbarui_pada
-       FROM umkm
-      WHERE LOWER(nama) = LOWER($1)
-      LIMIT 1`,
-    [nama],
-  );
-  const baris = hasil.rows[0];
-  return baris ? ubahKeUmkm(baris) : null;
+  // drizzle lower: sql`lower(nama) = lower($1)`
+  const baris = await db
+    .select()
+    .from(umkm)
+    .where(sql`lower(${umkm.nama}) = lower(${nama})`)
+    .limit(1);
+  return baris[0] ? ubahKeUmkm(baris[0]) : null;
 }
 
 /** Mengambil seluruh daftar UMKM, diurutkan terbaru dulu. */
 export async function daftarUmkm(): Promise<ReturnType<typeof ubahKeUmkm>[]> {
-  const hasil = await kumpulanKoneksi.query<BarisUmkm>(
-    `SELECT id, nama, nomor_hp, alamat, deskripsi, foto, pemilik_id, dibuat_pada, diperbarui_pada
-       FROM umkm
-      ORDER BY dibuat_pada DESC, id DESC`,
-  );
-  return hasil.rows.map(ubahKeUmkm);
+  const baris = await db.select().from(umkm).orderBy(desc(umkm.dibuatPada), desc(umkm.id));
+  return baris.map(ubahKeUmkm);
 }
 
 /** Memperbarui UMKM dan mengembalikan data terbarunya. */
@@ -113,67 +93,36 @@ export async function perbaruiUmkm(
   id: number,
   data: Partial<DataUmkmTersimpan>,
 ): Promise<ReturnType<typeof ubahKeUmkm>> {
-  const umkm = await temukanUmkmBerdasarkanId(id);
-  if (!umkm) {
-    throw new KesalahanTidakDitemukan('UMKM tidak ditemukan');
-  }
+  const umkmLama = await temukanUmkmBerdasarkanId(id);
+  if (!umkmLama) throw new KesalahanTidakDitemukan('UMKM tidak ditemukan');
 
-  const hasil = await kumpulanKoneksi.query<BarisUmkm>(
-    `UPDATE umkm
-        SET nama = COALESCE($2, nama),
-            nomor_hp = $3,
-            alamat = $4,
-            deskripsi = $5,
-            foto = COALESCE($6, foto),
-            diperbarui_pada = NOW()
-      WHERE id = $1
-      RETURNING id, nama, nomor_hp, alamat, deskripsi, foto, pemilik_id, dibuat_pada, diperbarui_pada`,
-    [
-      id,
-      data.nama ?? null,
-      data.nomorHp ?? null,
-      data.alamat ?? null,
-      data.deskripsi ?? null,
-      data.foto ?? null,
-    ],
-  );
+  await db
+    .update(umkm)
+    .set({
+      nama: data.nama ?? umkmLama.nama,
+      nomorHp: data.nomorHp ?? null,
+      alamat: data.alamat ?? null,
+      deskripsi: data.deskripsi ?? null,
+      foto: data.foto ?? umkmLama.foto,
+      diperbaruiPada: new Date(),
+    })
+    .where(eq(umkm.id, id))
+    .returning();
 
-  // Karena COALESCE untuk nama/foto mempertahankan nilai lama jika null,
-  // kita perlu penanganan khusus jika ingin menghapus; namun nama tidak boleh null.
-  // Jika nama disediakan, paksa update nama.
-  if (data.nama && hasil.rows[0].nama !== data.nama) {
-    const hasil2 = await kumpulanKoneksi.query<BarisUmkm>(
-      `UPDATE umkm SET nama = $2, diperbarui_pada = NOW() WHERE id = $1
-       RETURNING id, nama, nomor_hp, alamat, deskripsi, foto, pemilik_id, dibuat_pada, diperbarui_pada`,
-      [id, data.nama],
-    );
-    return ubahKeUmkm(hasil2.rows[0]);
-  }
-
-  // Untuk memastikan data nomor_hp/alamat terupdate meski null (menghapus), lakukan select ulang
+  // Jika nama berubah, drizzle sudah mengurusnya; tapi untuk konsistensi, ambil ulang
   const terbaru = await temukanUmkmBerdasarkanId(id);
-  if (!terbaru) {
-    throw new KesalahanTidakDitemukan('UMKM tidak ditemukan');
-  }
+  if (!terbaru) throw new KesalahanTidakDitemukan('UMKM tidak ditemukan');
   return terbaru;
 }
 
-/** Menghapus UMKM berdasarkan id (wajib memakai klausa where). */
+/** Menghapus UMKM berdasarkan id. */
 export async function hapusUmkm(id: number): Promise<void> {
-  const hasil = await kumpulanKoneksi.query(
-    `DELETE FROM umkm
-      WHERE id = $1`,
-    [id],
-  );
-  if (!hasil.rowCount) {
-    throw new KesalahanTidakDitemukan('UMKM tidak ditemukan');
-  }
+  const hasil = await db.delete(umkm).where(eq(umkm.id, id)).returning({ id: umkm.id });
+  if (hasil.length === 0) throw new KesalahanTidakDitemukan('UMKM tidak ditemukan');
 }
 
 /** Menghitung jumlah UMKM. */
 export async function hitungUmkm(): Promise<number> {
-  const hasil = await kumpulanKoneksi.query<{ total: number }>(
-    `SELECT COUNT(*)::int AS total FROM umkm`,
-  );
-  return hasil.rows[0]?.total ?? 0;
+  const hasil = await db.select({ total: count() }).from(umkm);
+  return hasil[0]?.total ?? 0;
 }

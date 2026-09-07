@@ -129,6 +129,18 @@ export const SkemaAdminUbahUsername = z.object({
     .regex(/^[a-zA-Z0-9_.]+$/, 'Username hanya boleh huruf, angka, titik, dan garis bawah'),
 });
 
+/** Daftar kategori berita yang diizinkan. */
+export const DAFTAR_KATEGORI_BERITA = [
+  'Umum',
+  'Infrastruktur',
+  'Kesehatan',
+  'Pendidikan',
+  'Pertanian',
+  'Ekonomi',
+  'Sosial',
+  'Budaya',
+] as const;
+
 /** Skema untuk membuat atau mengubah berita. */
 export const SkemaBerita = z.object({
   judul: z
@@ -138,6 +150,12 @@ export const SkemaBerita = z.object({
   isi: z
     .string({ required_error: 'Isi berita wajib diisi' })
     .min(BATASAN.isiBeritaMinimal, 'Isi berita minimal 20 karakter'),
+  kategori: z
+    .enum(DAFTAR_KATEGORI_BERITA, {
+      errorMap: () => ({ message: 'Kategori berita tidak valid' }),
+    })
+    .optional()
+    .default('Umum'),
 });
 
 /** Skema untuk membuat atau mengubah produk. */
@@ -228,6 +246,9 @@ export const SkemaDaftarProduk = SkemaPaginasi.extend({
     .int('UMKM harus bilangan bulat')
     .positive('UMKM tidak valid')
     .optional(),
+  // Pencarian nama/deskripsi (untuk performa: hindari fetch-all di frontend)
+  cari: z.string().max(100).optional(),
+  q: z.string().max(100).optional(),
   // Alias snake_case untuk kompatibilitas frontend lama
   kategori_id: z.coerce
     .number()
@@ -244,6 +265,14 @@ export const SkemaDaftarProduk = SkemaPaginasi.extend({
     .int('UMKM harus bilangan bulat')
     .positive('UMKM tidak valid')
     .optional(),
+});
+
+/** Skema parameter kueri daftar berita (dengan penyaring kategori). */
+export const SkemaDaftarBerita = SkemaPaginasi.extend({
+  kategori: z.enum(DAFTAR_KATEGORI_BERITA).optional(),
+  // Pencarian judul/isi (untuk performa: hindari fetch-all di frontend)
+  cari: z.string().max(100).optional(),
+  q: z.string().max(100).optional(),
 });
 
 /** Skema parameter kueri daftar pengguna (dengan penyaring peran). */

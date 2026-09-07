@@ -5,11 +5,22 @@
  * konfigurasi yang salah.
  */
 
-import dotenv from 'dotenv';
+import { createRequire } from 'node:module';
 import { z } from 'zod';
 
-// Memuat file .env ke dalam proses jika tersedia
-dotenv.config();
+// Memuat file .env secara opsional.
+// Di Vercel/Render variabel lingkungan sudah diinjeksi oleh platform,
+// jadi dotenv tidak wajib ada di runtime. Bungkus dengan try-catch
+// agar `ERR_MODULE_NOT_FOUND: Cannot find package 'dotenv'` tidak
+// mematikan serverless lambda saat node_modules tidak terbundel sempurna.
+try {
+  const require = createRequire(import.meta.url);
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const dotenv = require('dotenv') as { config: () => void };
+  dotenv.config();
+} catch {
+  // Abaikan jika dotenv tidak tersedia — process.env tetap terbaca
+}
 
 /** Skema zod untuk memvalidasi seluruh variabel lingkungan. */
 const SkemaLingkungan = z.object({
@@ -18,6 +29,28 @@ const SkemaLingkungan = z.object({
     .default('development'),
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
   DATABASE_URL: z.string().min(1, 'URL database tidak boleh kosong'),
+  // Konfigurasi SSL manual untuk Supabase.
+  // - Jika diatur 'true'  => SSL aktif ({ rejectUnauthorized: false }) wajib untuk Supabase pooler (6543).
+  // - Jika diatur 'false' => SSL non-aktif (untuk lokal tanpa SSL).
+  // - Jika tidak diatur (undefined) => otomatis aktif saat DATABASE_URL mengandung 'supabase'
+  //   atau 'sslmode=require', agar deploy ke Render/Supabase langsung jalan tanpa set manual.
+  DATABASE_SSL: z
+    .string()
+    .optional()
+    .transform((nilai) => {
+      if (nilai === undefined || nilai.trim() === '') {
+        return undefined;
+      }
+      const normalisasi = nilai.trim().toLowerCase();
+      if (normalisasi === 'true' || normalisasi === '1' || normalisasi === 'require') {
+        return true;
+      }
+      if (normalisasi === 'false' || normalisasi === '0' || normalisasi === 'disable') {
+        return false;
+      }
+      // Nilai tidak dikenal -> anggap undefined agar fallback ke deteksi otomatis
+      return undefined;
+    }),
   JWT_RAHASIA: z.string().min(1, 'Rahasia jwt tidak boleh kosong'),
   JWT_KEDALUWARSA: z.string().min(1).default('1d'),
   ASAL_DIIZINKAN: z.string().default('*'),
@@ -29,6 +62,17 @@ const SkemaLingkungan = z.object({
   BATAS_LAJU_UMUM: z.coerce.number().int().positive().default(300),
   BATAS_LAJU_LOGIN: z.coerce.number().int().positive().default(30),
   BATAS_LAJU_UNGGAH: z.coerce.number().int().positive().default(60),
+  // ---------- Penyimpanan Supabase Storage (untuk Vercel produksi) ----------
+  // Jika diisi, berkas akan disimpan ke Supabase Storage (persisten).
+  // Jika kosong, fallback ke filesystem lokal (/tmp/unggahan di Vercel, unggahan di lokal).
+  // - SUPABASE_URL: contoh https://xxxxxxxx.supabase.co
+  // - SUPABASE_SERVICE_ROLE_KEY: kunci service_role dari dashboard Supabase (berawalan eyJ...)
+  //   Alternatif: SUPABASE_ANON_KEY jika bucket public dengan policy yang mengizinkan.
+  // - SUPABASE_STORAGE_BUCKET: nama bucket, default "unggahan"
+  SUPABASE_URL: z.string().url().optional().or(z.literal('').transform(() => undefined)),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_ANON_KEY: z.string().optional(),
+  SUPABASE_STORAGE_BUCKET: z.string().min(1).default('unggahan'),
 });
 
 /** Hasil validasi variabel lingkungan. */

@@ -15,6 +15,7 @@ import {
   SkemaDaftarPengguna,
   SkemaIdRute,
   SkemaKueriDaftarPengguna,
+  SkemaUbahProfil,
 } from '../validasi/skema.js';
 import {
   daftarkanPengguna,
@@ -22,6 +23,7 @@ import {
   detailPengguna,
   hapusPengguna,
   ubahKataSandiPengguna,
+  ubahProfilPengguna,
   ubahUsernamePengguna,
 } from '../pengendali/pengguna-pengendali.js';
 
@@ -73,4 +75,12 @@ rutePenggunaAdmin.put(
   validasiParameter(SkemaIdRute),
   validasiBadan(SkemaAdminUbahUsername),
   ubahUsernamePengguna,
+);
+
+// Ubah profil pengguna (namaLengkap, email, nomorHp) oleh admin
+rutePenggunaAdmin.put(
+  '/:id/profil',
+  validasiParameter(SkemaIdRute),
+  validasiBadan(SkemaUbahProfil),
+  ubahProfilPengguna,
 );

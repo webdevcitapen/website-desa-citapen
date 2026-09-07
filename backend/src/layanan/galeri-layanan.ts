@@ -7,7 +7,7 @@
 import type { BerkasUnggahan, DataGaleriDesa } from '../types/index.js';
 import { KesalahanTidakDitemukan } from '../utils/kesalahan.js';
 import { kompresGambar } from '../utils/kompresi-gambar.js';
-import { hapusBerkas, simpanBerkas } from '../utils/berkas.js';
+import { hapusBerkas, simpanBerkas, dapatkanUrlBerkasUntukKlien } from '../utils/berkas.js';
 import { logger } from '../utils/logger.js';
 import {
   buatGaleri as buatGaleriRepo,
@@ -16,10 +16,18 @@ import {
   temukanGaleriBerdasarkanId,
 } from '../repositori/galeri-repositori.js';
 
+/** Mengubah path foto galeri menjadi URL CDN. */
+function perkayaFotoGaleri<T extends { foto: string }>(item: T): T {
+  return {
+    ...item,
+    foto: (dapatkanUrlBerkasUntukKlien(item.foto) as string) ?? item.foto,
+  };
+}
+
 /** Mengambil seluruh daftar galeri untuk publik. */
 export async function ambilDaftarGaleri(): Promise<DataGaleriDesa[]> {
   const daftar = await daftarGaleriRepo();
-  return daftar.map((item) => ({
+  return daftar.map((item) => perkayaFotoGaleri({
     id: item.id,
     judul: item.judul,
     keterangan: item.keterangan,
@@ -36,7 +44,7 @@ export async function ambilDetailGaleri(id: number): Promise<DataGaleriDesa> {
   if (!galeri) {
     throw new KesalahanTidakDitemukan('Galeri tidak ditemukan');
   }
-  return {
+  return perkayaFotoGaleri({
     id: galeri.id,
     judul: galeri.judul,
     keterangan: galeri.keterangan,
@@ -44,7 +52,7 @@ export async function ambilDetailGaleri(id: number): Promise<DataGaleriDesa> {
     urutan: galeri.urutan,
     dibuatPada: galeri.dibuatPada,
     diperbaruiPada: galeri.diperbaruiPada,
-  };
+  });
 }
 
 /**
@@ -68,7 +76,7 @@ export async function tambahGaleri(
 
     logger.info({ galeriId: galeri.id }, 'Galeri baru berhasil ditambahkan');
 
-    return {
+    return perkayaFotoGaleri({
       id: galeri.id,
       judul: galeri.judul,
       keterangan: galeri.keterangan,
@@ -76,7 +84,7 @@ export async function tambahGaleri(
       urutan: galeri.urutan,
       dibuatPada: galeri.dibuatPada,
       diperbaruiPada: galeri.diperbaruiPada,
-    };
+    });
   } catch (kesalahan) {
     await hapusBerkas(pathFoto);
     throw kesalahan;

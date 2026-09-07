@@ -1,0 +1,57 @@
+{
+  "version": 2,
+  "installCommand": "npm install",
+  "buildCommand": "npm run build:asli",
+  "outputDirectory": "dist",
+  "framework": null,
+  "regions": ["sin1"],
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "dist/**",
+      "maxDuration": 10
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        }
+      ]
+    },
+    {
+      "source": "/unggahan/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "cross-origin"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/unggahan/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ],
+  "cleanUrls": true
+}

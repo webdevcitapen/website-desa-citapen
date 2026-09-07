@@ -360,11 +360,10 @@ export default function ProfilAdmin() {
           <div className="flex items-center gap-2 mb-6">
             <ScrollText className="w-5 h-5 text-[#0A3D2D]" />
             <h2 className="text-lg font-bold text-[#0A3D2D]">1. Sejarah Desa</h2>
-            <span className="ml-auto text-xs bg-[#0A3D2D] text-white px-2 py-1 rounded-full font-bold">PUT /profil-desa/sejarah</span>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-[13px] font-extrabold text-[#1F2937] mb-2">Sejarah Singkat Desa Citapen</label>
+              <label className="block text-[13px] font-extrabold text-[#1F2937] mb-2">Sejarah Desa Citapen</label>
               <textarea
                 rows={8}
                 placeholder="Tulis sejarah desa minimal 20 karakter..."
@@ -387,7 +386,6 @@ export default function ProfilAdmin() {
           <div className="flex items-center gap-2 mb-6">
             <Eye className="w-5 h-5 text-[#0A3D2D]" />
             <h2 className="text-lg font-bold text-[#0A3D2D]">2. Visi & Misi</h2>
-            <span className="ml-auto text-xs bg-[#0A3D2D] text-white px-2 py-1 rounded-full font-bold">PUT /profil-desa/visi-misi</span>
           </div>
           <div className="space-y-6">
             <div>

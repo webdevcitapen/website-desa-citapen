@@ -10,7 +10,7 @@ import {
   KesalahanTidakDitemukan,
 } from '../utils/kesalahan.js';
 import { kompresGambar } from '../utils/kompresi-gambar.js';
-import { hapusBerkas, simpanBerkas } from '../utils/berkas.js';
+import { hapusBerkas, simpanBerkas, dapatkanUrlBerkasUntukKlien } from '../utils/berkas.js';
 import { logger } from '../utils/logger.js';
 import {
   buatBerita as buatBeritaRepositori,
@@ -27,6 +27,7 @@ import { hitungTotalHalaman } from '../utils/paginasi.js';
 export interface DataSimpanBerita {
   judul: string;
   isi: string;
+  kategori?: string;
 }
 
 /** Parameter untuk mengambil daftar berita. */
@@ -35,6 +36,8 @@ export interface ParameterDaftarBeritaLayanan {
   perHalaman: number;
   lewati: number;
   batas: number;
+  kategori?: string;
+  cari?: string;
 }
 
 /** Mengubah gambar berita yang diunggah menjadi path yang aman. */
@@ -76,6 +79,7 @@ export async function tambahBerita(
       judul: data.judul,
       isi: data.isi,
       gambar,
+      kategori: data.kategori ?? 'Umum',
       penulisId,
     });
 
@@ -84,7 +88,7 @@ export async function tambahBerita(
       'Berita baru berhasil dibuat',
     );
 
-    return berita;
+    return perkayaGambarBerita(berita);
   } catch (kesalahan) {
     // Bersihkan berkas gambar jika penyimpanan berita gagal
     if (gambar) {
@@ -94,19 +98,33 @@ export async function tambahBerita(
   }
 }
 
+/** Mengubah path gambar di dalam DataBerita menjadi URL publik CDN jika Supabase aktif. */
+function perkayaGambarBerita<T extends { gambar: string | null }>(item: T): T {
+  return {
+    ...item,
+    gambar: dapatkanUrlBerkasUntukKlien(item.gambar) as T['gambar'],
+  };
+}
+
 /** Mengambil daftar berita dengan paginasi untuk publik. */
 export async function ambilDaftarBerita(
   parameter: ParameterDaftarBeritaLayanan,
 ): Promise<HasilPaginasi<DataBerita>> {
-  const daftar = await daftarBeritaRepositori({
-    batas: parameter.batas,
-    lewati: parameter.lewati,
-  });
+  // Parallelkan 2 query agar waktu respons setengah
+  const [daftar, total] = await Promise.all([
+    daftarBeritaRepositori({
+      batas: parameter.batas,
+      lewati: parameter.lewati,
+      kategori: parameter.kategori,
+      cari: parameter.cari,
+    }),
+    hitungBerita(parameter.kategori, parameter.cari),
+  ]);
 
-  const total = await hitungBerita();
+  const daftarDenganUrl = daftar.map(perkayaGambarBerita);
 
   return {
-    daftar,
+    daftar: daftarDenganUrl,
     halaman: parameter.halaman,
     perHalaman: parameter.perHalaman,
     total,
@@ -120,7 +138,7 @@ export async function ambilDetailBerita(id: number): Promise<DataBerita> {
   if (!berita) {
     throw new KesalahanTidakDitemukan('Berita tidak ditemukan');
   }
-  return berita;
+  return perkayaGambarBerita(berita);
 }
 
 /**
@@ -150,6 +168,7 @@ export async function ubahBerita(
       judul: data.judul,
       isi: data.isi,
       gambar,
+      kategori: data.kategori ?? berita.kategori ?? 'Umum',
     });
 
     logger.info(
@@ -157,7 +176,7 @@ export async function ubahBerita(
       'Berita berhasil diperbarui',
     );
 
-    return beritaDiperbarui;
+    return perkayaGambarBerita(beritaDiperbarui);
   } catch (kesalahan) {
     // Jika berkas baru berhasil disimpan tetapi penyimpanan gagal,
     // hapus berkas baru dan kembalikan gambar lama

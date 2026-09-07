@@ -6,6 +6,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { bungkusHandler } from '../middleware/penangan-kesalahan.js';
 import { kirimSukses, kirimSuksesDibuat } from '../utils/respons.js';
+import { tambahHeaderGuard } from '../utils/guard-form.js';
 import {
   ambilDaftarStruktur,
   ambilDetailStruktur,
@@ -27,6 +28,7 @@ export const detailStrukturOrganisasi = bungkusHandler(
   async (permintaan: Request, tanggapan: Response, _berikutnya: NextFunction) => {
     const { id } = permintaan.params as { id: string };
     const item = await ambilDetailStruktur(Number(id));
+    tambahHeaderGuard(tanggapan, item);
     kirimSukses(tanggapan, item, 'Detail struktur organisasi berhasil diambil');
   },
 );

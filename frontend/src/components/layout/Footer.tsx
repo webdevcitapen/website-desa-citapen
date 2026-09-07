@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Mail, Phone, Sparkles, Landmark } from 'lucide-react';
+import { Mail, Sparkles, Landmark } from 'lucide-react';
 import api from '../../services/api';
 
 export default function Footer({ profil: propProfil }: { profil?: any }) {
@@ -30,7 +30,6 @@ export default function Footer({ profil: propProfil }: { profil?: any }) {
   const kecamatan = p.kecamatan || 'Hantara';
   const kabupaten = p.kabupaten || 'Kuningan';
   const visi = p.visi || 'Mewujudkan masyarakat desa yang sejahtera, mandiri, dan berbudaya melalui tata kelola yang transparan dan inovatif.';
-  const telepon = p.telepon || '0831 9335 5962';
 
   return (
     <footer className="bg-[#022c22] text-white py-12 mt-auto">
@@ -58,15 +57,11 @@ export default function Footer({ profil: propProfil }: { profil?: any }) {
               </li>
               <li className="flex items-center gap-3 text-sm text-emerald-100/90">
                 <Sparkles className="w-4 h-4 text-emerald-100/70" />
-                <span>{namaDesa.toUpperCase().replace('DESA ', '')} MAJU KA BALE</span>
+                <span>{namaDesa.toUpperCase().replace('DESA ', '')} Maju Ka Bale</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-emerald-100/90">
                 <Landmark className="w-4 h-4 text-emerald-100/70" />
                 <span>Pemdes {namaDesa.replace('Desa ', '')}</span>
-              </li>
-              <li className="flex items-center gap-3 text-sm text-emerald-100/90">
-                <Phone className="w-4 h-4 text-emerald-100/70" />
-                <span>{telepon}</span>
               </li>
             </ul>
           </div>

@@ -13,19 +13,36 @@ import {
 } from '../repositori/struktur-organisasi-repositori.js';
 import type { DataStrukturOrganisasi } from '../types/index.js';
 import { KesalahanTidakDitemukan } from '../utils/kesalahan.js';
+import { buatAvatarFallback } from '../utils/avatar.js';
+import { dapatkanUrlBerkasUntukKlien } from '../utils/berkas.js';
+
+/** Memperkaya satu item struktur dengan fallback avatar/inisial. */
+function perkayaDenganAvatarFallback<T extends { nama: string; foto: string | null }>(
+  item: T,
+): T & { inisial: string; warnaAvatar: string } {
+  const fallback = buatAvatarFallback(item.nama);
+  return {
+    ...item,
+    foto: (dapatkanUrlBerkasUntukKlien(item.foto) as T['foto']),
+    inisial: fallback.inisial,
+    warnaAvatar: fallback.warnaAvatar,
+  };
+}
 
 /** Mengambil semua struktur organisasi untuk publik. */
 export async function ambilDaftarStruktur(): Promise<DataStrukturOrganisasi[]> {
   const daftar = await daftarStruktur();
-  return daftar.map((item) => ({
-    id: item.id,
-    nama: item.nama,
-    jabatan: item.jabatan,
-    urutan: item.urutan,
-    foto: item.foto,
-    dibuatPada: item.dibuatPada,
-    diperbaruiPada: item.diperbaruiPada,
-  }));
+  return daftar.map((item) =>
+    perkayaDenganAvatarFallback({
+      id: item.id,
+      nama: item.nama,
+      jabatan: item.jabatan,
+      urutan: item.urutan,
+      foto: item.foto,
+      dibuatPada: item.dibuatPada,
+      diperbaruiPada: item.diperbaruiPada,
+    }),
+  );
 }
 
 /** Mengambil detail satu struktur. */
@@ -36,7 +53,7 @@ export async function ambilDetailStruktur(
   if (!item) {
     throw new KesalahanTidakDitemukan('Struktur organisasi tidak ditemukan');
   }
-  return {
+  return perkayaDenganAvatarFallback({
     id: item.id,
     nama: item.nama,
     jabatan: item.jabatan,
@@ -44,7 +61,7 @@ export async function ambilDetailStruktur(
     foto: item.foto,
     dibuatPada: item.dibuatPada,
     diperbaruiPada: item.diperbaruiPada,
-  };
+  });
 }
 
 /** Membuat struktur baru oleh admin desa. */
@@ -59,7 +76,7 @@ export async function tambahStruktur(data: {
     urutan: data.urutan,
   });
   logger.info({ strukturId: item.id }, 'Struktur organisasi berhasil dibuat');
-  return {
+  return perkayaDenganAvatarFallback({
     id: item.id,
     nama: item.nama,
     jabatan: item.jabatan,
@@ -67,7 +84,7 @@ export async function tambahStruktur(data: {
     foto: item.foto,
     dibuatPada: item.dibuatPada,
     diperbaruiPada: item.diperbaruiPada,
-  };
+  });
 }
 
 /** Mengubah struktur oleh admin desa. */
@@ -81,7 +98,7 @@ export async function ubahStruktur(
     urutan: data.urutan,
   });
   logger.info({ strukturId: id }, 'Struktur organisasi berhasil diperbarui');
-  return {
+  return perkayaDenganAvatarFallback({
     id: item.id,
     nama: item.nama,
     jabatan: item.jabatan,
@@ -89,7 +106,7 @@ export async function ubahStruktur(
     foto: item.foto,
     dibuatPada: item.dibuatPada,
     diperbaruiPada: item.diperbaruiPada,
-  };
+  });
 }
 
 /** Menghapus struktur oleh admin desa. */

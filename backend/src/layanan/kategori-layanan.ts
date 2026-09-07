@@ -16,6 +16,10 @@ import {
   hapusKategori,
   temukanKategoriBerdasarkanId,
 } from '../repositori/kategori-repositori.js';
+import { eq } from 'drizzle-orm';
+import { db } from '../config/database.js';
+import { produk } from '../db/schema.js';
+import { hitungProduk } from '../repositori/produk-repositori.js';
 
 /** Membuat kategori produk baru oleh admin desa. */
 export async function tambahKategori(
@@ -62,6 +66,50 @@ export async function hapusKategoriDenganPemeriksaan(
   // Admin desa boleh menghapus kategori apapun
   if (peran !== 'admin' && kategori.pemilikId !== pemilikId) {
     throw new KesalahanOtorisasi('Anda hanya dapat menghapus kategori milik Anda');
+  }
+
+  // Cegah penghapusan kategori default "Umum" jika masih dipakai produk
+  // dan sediakan fallback agar constraint NOT NULL tidak dilanggar
+  const jumlahPemakaian = await hitungProduk(id);
+  if (jumlahPemakaian > 0) {
+    // Jika kategori yang dihapus adalah "Umum" dan masih ada produk,
+    // pastikan ada kategori fallback "Umum" lain sebelum reassign
+    if (kategori.nama.toLowerCase() === 'umum') {
+      const daftar = await daftarKategoriRepositori();
+      const umumLain = daftar.find(
+        (k) => k.id !== id && k.nama.toLowerCase() === 'umum',
+      );
+      // Jika tidak ada Umum lain, jangan hapus - produk wajib punya kategori
+      if (!umumLain) {
+        throw new KesalahanKonflik(
+          'Kategori Umum tidak boleh dihapus karena masih dipakai produk. Buat kategori lain terlebih dahulu atau pindahkan produk ke kategori lain.',
+        );
+      }
+      // Pindahkan produk ke kategori Umum lain (via Drizzle)
+      await db
+        .update(produk)
+        .set({ kategoriId: umumLain.id })
+        .where(eq(produk.kategoriId, id));
+    } else {
+      // Untuk kategori selain Umum, pindahkan produk ke kategori Umum default
+      let idUmumFallback: number | null = null;
+      const daftar = await daftarKategoriRepositori();
+      const umum = daftar.find((k) => k.nama.toLowerCase() === 'umum');
+      if (umum) {
+        idUmumFallback = umum.id;
+      } else {
+        // Buat kategori Umum jika belum ada
+        const baru = await buatKategoriRepositori({ nama: 'Umum', pemilikId });
+        idUmumFallback = baru.id;
+      }
+      // Pastikan tidak mereassign ke dirinya sendiri
+      if (idUmumFallback !== id) {
+        await db
+          .update(produk)
+          .set({ kategoriId: idUmumFallback })
+          .where(eq(produk.kategoriId, id));
+      }
+    }
   }
 
   await hapusKategori(id);

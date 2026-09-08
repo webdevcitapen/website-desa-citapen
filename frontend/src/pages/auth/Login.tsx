@@ -6,7 +6,6 @@ import api from '../../services/api';
 export default function Login() {
   const [nik, setNik] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -126,7 +125,7 @@ export default function Login() {
           </div>
 
           {/* Password Field */}
-          <div className="mb-4">
+          <div className="mb-6">
             <label className="block text-[11px] font-bold text-slate-800 mb-1.5" htmlFor="password">
               Kata Sandi
             </label>
@@ -144,20 +143,6 @@ export default function Login() {
                 required
               />
             </div>
-          </div>
-
-          {/* Remember Me */}
-          <div className="flex items-center mb-5">
-            <input
-              id="remember_me"
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-3.5 w-3.5 text-[#0A3D2D] focus:ring-[#0A3D2D] border-gray-300 rounded cursor-pointer"
-            />
-            <label htmlFor="remember_me" className="ml-2 block text-[11px] md:text-xs text-slate-600 font-medium cursor-pointer">
-              Ingat saya selama 30 hari
-            </label>
           </div>
 
           {/* Submit Button */}

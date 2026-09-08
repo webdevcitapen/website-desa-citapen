@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Mountain, Store, MapPin, Mail, Phone, Car, Sparkles, Landmark } from 'lucide-react';
+import { Users, Mountain, Store, MapPin, Car } from 'lucide-react';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BottomNav from '../../components/layout/BottomNav';
@@ -61,7 +61,6 @@ export default function Beranda() {
   const p = profil || {};
   const luasWilayah = p.luasWilayah || p.luas_wilayah || '-';
   const visi = p.visi || 'Mewujudkan masyarakat desa yang sejahtera, mandiri, dan berbudaya melalui tata kelola yang transparan dan inovatif.';
-  const telepon = p.telepon || '0831 9335 5962';
   const namaDesa = p.nama_desa || 'Desa Citapen';
 
   return (

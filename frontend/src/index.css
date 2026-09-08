@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	min-width: 320px;
+	overflow-x: hidden;
+	-webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+select,
+input,
+textarea {
+	touch-action: manipulation;
+}

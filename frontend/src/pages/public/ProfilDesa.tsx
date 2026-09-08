@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Map, Image as ImageIcon, X } from 'lucide-react';
+import { Map, Image as ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BottomNav from '../../components/layout/BottomNav';
@@ -12,6 +12,8 @@ export default function ProfilDesa() {
   const [galeri, setGaleri] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSejarahModalOpen, setIsSejarahModalOpen] = useState(false);
+  const [galeriPage, setGaleriPage] = useState(1);
+  const [selectedGaleri, setSelectedGaleri] = useState<any | null>(null);
 
   // Fallback statis jika backend belum ada data sejarah/visi/misi
   const SEJARAH_FALLBACK = `Sejarah Desa Citapen bermula dari sebuah pemukiman kecil di lereng bukit yang berkembang berkat gotong royong masyarakat. Secara administratif, Desa Citapen terus berbenah dan berkembang menjadi desa mandiri yang mempertahankan nilai-nilai luhur dan budaya lokal. Berbagai pembangunan fisik dan non-fisik telah dilakukan untuk menunjang kehidupan warga.`;
@@ -98,6 +100,9 @@ export default function ProfilDesa() {
   const misiTampil: string[] = p.misi
     ? String(p.misi).split('\n').map((s: string) => s.trim()).filter(Boolean)
     : MISI_FALLBACK;
+  const galeriPerPage = 10;
+  const totalGaleriPage = Math.max(1, Math.ceil(galeri.length / galeriPerPage));
+  const galeriTampil = galeri.slice((galeriPage - 1) * galeriPerPage, galeriPage * galeriPerPage);
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#FBFBFF] pb-20 md:pb-0">
@@ -105,7 +110,7 @@ export default function ProfilDesa() {
 
       {/* Header Banner */}
       <section className="relative h-[400px] lg:h-[500px] flex items-center overflow-hidden bg-[#FBFBFF]">
-        <div className="absolute inset-0 bg-[url('/images/profil-banner.jpg')] bg-cover bg-center opacity-40"></div>
+        <div className="absolute inset-0 bg-[url('/images/profil-banner.png')] bg-cover bg-center opacity-40"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#FBFBFF] via-[#FBFBFF]/10 to-transparent"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-10">
@@ -125,7 +130,7 @@ export default function ProfilDesa() {
       <section className="relative -mt-24 lg:-mt-32 z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
         <div className="relative rounded-2xl lg:rounded-[2rem] overflow-hidden shadow-xl border-4 lg:border-8 border-white bg-white aspect-[21/9] lg:aspect-[3/1]">
           <img
-            src="/images/gapura-desa.svg"
+            src="/images/gapura-desa.png"
             alt="Gapura Desa"
             className="w-full h-full object-cover"
           />
@@ -139,12 +144,6 @@ export default function ProfilDesa() {
 
       {/* 1. Sejarah Singkat - urutan pertama sesuai permintaan */}
       <section className="py-12 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-start mb-8">
-          <div className="inline-flex items-center gap-1.5 bg-[#EBF1FF] text-[#3460DC] text-xs font-bold px-3.5 py-1.5 rounded-full tracking-wide">
-            Sejarah Desa
-          </div>
-        </div>
-
         <div className="text-center mb-10">
           <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Profil {NAMA_DESA}</p>
           <h2 className="text-3xl lg:text-4xl font-bold text-slate-800">SEJARAH DESA</h2>
@@ -340,8 +339,13 @@ export default function ProfilDesa() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {galeri.map((item: any) => (
-                <div key={item.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
+              {galeriTampil.map((item: any) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setSelectedGaleri(item)}
+                  className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group text-left focus:outline-none focus:ring-2 focus:ring-[#0A3D2D] focus:ring-offset-2"
+                >
                   <div className="relative h-56 overflow-hidden bg-slate-100">
                     <img
                       src={getImageUrl(item.foto, { width: 600 })}
@@ -364,11 +368,34 @@ export default function ProfilDesa() {
                     <div className="p-4">
                       {item.judul && <h4 className="font-bold text-slate-800 text-sm mb-1 line-clamp-1">{item.judul}</h4>}
                       {item.keterangan && <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{item.keterangan}</p>}
-                      <p className="text-[10px] text-slate-400 mt-2">Urutan {item.urutan} • {new Date(item.dibuatPada).toLocaleDateString('id-ID')}</p>
+                      <p className="text-[10px] text-slate-400 mt-2">{new Date(item.dibuatPada).toLocaleDateString('id-ID')}</p>
                     </div>
                   )}
-                </div>
+                </button>
               ))}
+            </div>
+          )}
+          {totalGaleriPage > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <button
+                type="button"
+                onClick={() => setGaleriPage((page) => Math.max(1, page - 1))}
+                disabled={galeriPage === 1}
+                aria-label="Halaman galeri sebelumnya"
+                className="w-9 h-9 rounded-xl border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-xs font-medium text-slate-500">Halaman {galeriPage} dari {totalGaleriPage}</span>
+              <button
+                type="button"
+                onClick={() => setGaleriPage((page) => Math.min(totalGaleriPage, page + 1))}
+                disabled={galeriPage === totalGaleriPage}
+                aria-label="Halaman galeri berikutnya"
+                className="w-9 h-9 rounded-xl border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>
@@ -396,6 +423,46 @@ export default function ProfilDesa() {
             </button>
             <h2 id="sejarah-modal-title" className="pr-10 text-2xl font-bold text-[#0A3D2D]">Sejarah Desa</h2>
             <p className="mt-6 whitespace-pre-line text-[15px] leading-relaxed text-slate-600">{sejarahTampil}</p>
+          </div>
+        </div>
+      )}
+
+      {selectedGaleri && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4"
+          onClick={() => setSelectedGaleri(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="galeri-modal-title"
+            className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label="Tutup detail galeri"
+              onClick={() => setSelectedGaleri(null)}
+              className="absolute right-3 top-3 z-10 rounded-lg bg-white/90 p-2 text-slate-500 shadow hover:bg-white hover:text-slate-800"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <img
+              src={getImageUrl(selectedGaleri.foto, { width: 1200 })}
+              alt={selectedGaleri.judul || 'Galeri Desa Citapen'}
+              className="max-h-[65vh] w-full rounded-xl bg-slate-100 object-contain"
+            />
+            <div className="px-1 pt-5">
+              <h2 id="galeri-modal-title" className="pr-10 text-xl font-bold text-[#0A3D2D]">
+                {selectedGaleri.judul || 'Galeri Desa Citapen'}
+              </h2>
+              {selectedGaleri.keterangan && (
+                <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">{selectedGaleri.keterangan}</p>
+              )}
+              {selectedGaleri.dibuatPada && (
+                <p className="mt-3 text-xs text-slate-400">{new Date(selectedGaleri.dibuatPada).toLocaleDateString('id-ID')}</p>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -129,12 +129,12 @@ export default function Umkm() {
     <div className="min-h-screen flex flex-col font-sans bg-[#FBFBFF] pb-20 md:pb-0 relative">
       <Navbar />
       <button onClick={handleTambahProduk} className="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-40 bg-[#0A3D2D] text-white px-5 py-3 rounded-full shadow-lg hover:bg-[#082d22] transition-colors flex items-center gap-2 font-semibold"><Plus className="w-5 h-5" />Tambah Produk</button>
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-12 pb-24">
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#0A3D2D] mb-3">UMKM Desa</h1>
+      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-8 sm:pt-12 pb-28">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold text-[#0A3D2D] mb-3">UMKM Desa</h1>
           <p className="text-slate-600 max-w-2xl text-sm md:text-base leading-relaxed">Data potensi usaha, pengembangan produk, dan etalase UMKM warga desa kami.</p>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 md:p-5 mb-8">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 sm:p-5 mb-6 sm:mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative"><Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" /><input type="text" placeholder="Cari produk, UMKM, deskripsi..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-[#0A3D2D] focus:ring-1 focus:ring-[#0A3D2D] outline-none bg-[#F8FAFC] focus:bg-white text-sm font-medium text-slate-700 placeholder:text-slate-400" /></div>
             <div className="relative"><Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" /><select value={kategoriFilter} onChange={(e) => setKategoriFilter(e.target.value)} className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 bg-[#F8FAFC] text-sm font-medium text-slate-700 outline-none focus:border-[#0A3D2D] focus:bg-white appearance-none cursor-pointer" style={{ backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.75rem center', backgroundSize: '1em' }}><option value="Semua">Semua Kategori</option>{kategoriList.map(k => <option key={k.id} value={k.nama}>{k.nama}</option>)}</select></div>
@@ -160,14 +160,14 @@ export default function Umkm() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
               {produkList.map((item) => (
                 <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col h-full">
                   <div className="relative h-56 w-full bg-slate-100">
                     <img src={item.foto ? getImageUrl(item.foto, { width: 600 }) : '/images/hero-bg.png'} alt={item.nama} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
                     {item.kategori && item.kategori.nama && (<div className="absolute top-4 left-4 bg-white text-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm tracking-wide">{item.kategori.nama}</div>)}
                   </div>
-                  <div className="p-6 md:p-8 flex flex-col flex-grow">
+                  <div className="p-5 sm:p-8 flex flex-col flex-grow">
                     <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-1 leading-snug">{item.nama}</h3>
                     {item.umkm?.nama && (<p className="text-xs font-bold text-emerald-600 mb-3">{item.umkm.nama}</p>)}
                     <p className="text-slate-500 text-sm md:text-[15px] line-clamp-3 leading-relaxed flex-grow mb-6">{item.deskripsi}</p>

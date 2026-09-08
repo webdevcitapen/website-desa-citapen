@@ -7,11 +7,11 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-emerald-100 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-16 md:h-20 gap-3">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
-            <img src="/images/logo.png" alt="Logo Kuningan" className="w-8 h-10 object-contain" />
-            <span className="text-xl font-bold text-slate-800 tracking-tight">Desa Citapen</span>
+          <Link to="/" className="flex min-w-0 items-center gap-2 md:gap-3">
+            <img src="/images/logo.png" alt="Logo Desa Citapen" className="w-7 h-9 md:w-8 md:h-10 object-contain shrink-0" />
+            <span className="truncate text-base md:text-xl font-bold text-slate-800 tracking-tight">Desa Citapen</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -23,7 +23,7 @@ export default function Navbar() {
           </div>
 
           {/* Login Button */}
-          <Link to="/login" className="px-6 py-2.5 bg-[#0A3D2D] text-white text-xs font-bold rounded hover:bg-[#082d22] transition tracking-wider shadow-md">
+          <Link to="/login" className="shrink-0 px-4 md:px-6 py-2.5 bg-[#0A3D2D] text-white text-[11px] md:text-xs font-bold rounded hover:bg-[#082d22] transition tracking-wider shadow-md">
             LOGIN
           </Link>
         </div>

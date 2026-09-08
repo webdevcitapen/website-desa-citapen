@@ -37,6 +37,7 @@ function ubahKeBerita(baris: {
   penulisUsername: string | null;
   penulisNamaLengkap: string | null;
   penulisFotoProfil: string | null;
+  penulisPeran: string | null;
   dibuatPada: Date;
   diperbaruiPada: Date;
 }): {
@@ -50,6 +51,7 @@ function ubahKeBerita(baris: {
     username: string;
     namaLengkap: string;
     fotoProfil: string | null;
+    peran: 'admin' | 'publikasi';
   } | null;
   dibuatPada: Date;
   diperbaruiPada: Date;
@@ -67,6 +69,7 @@ function ubahKeBerita(baris: {
             username: baris.penulisUsername,
             namaLengkap: baris.penulisNamaLengkap ?? '',
             fotoProfil: baris.penulisFotoProfil,
+            peran: baris.penulisPeran === 'admin' ? 'admin' : 'publikasi',
           }
         : null,
     dibuatPada: baris.dibuatPada,
@@ -86,6 +89,7 @@ function seleksiBeritaDenganPenulis() {
     penulisUsername: pengguna.username,
     penulisNamaLengkap: pengguna.namaLengkap,
     penulisFotoProfil: pengguna.fotoProfil,
+    penulisPeran: pengguna.peran,
     dibuatPada: berita.dibuatPada,
     diperbaruiPada: berita.diperbaruiPada,
   };

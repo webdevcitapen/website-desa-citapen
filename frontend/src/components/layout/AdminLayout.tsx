@@ -159,7 +159,7 @@ export default function AdminLayout() {
           {navItems.map((item) => {
             const hasSubItems = item.subItems && item.subItems.length > 0;
             const isPathActive = path === item.path || path.startsWith(item.path + '/');
-            const isActive = hasSubItems ? isPathActive : path === item.path;
+            const isActive = isPathActive;
             const Icon = item.icon;
             
             return (

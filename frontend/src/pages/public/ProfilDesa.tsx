@@ -206,7 +206,11 @@ export default function ProfilDesa() {
                 <Map className="w-6 h-6 text-[#0A3D2D]" />
               </div>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Total Luas Wilayah</p>
-              <p className="text-4xl font-bold text-slate-800">{p.luasWilayah || '0'} <span className="text-lg text-slate-500 font-medium">Ha / km²</span></p>
+              <p className="text-4xl font-bold text-slate-800">
+                {p.luasWilayah || '0'}
+                <br />
+                <span className="text-lg text-slate-500 font-medium">Ha / km²</span>
+              </p>
             </div>
 
             {/* Batas Wilayah */}

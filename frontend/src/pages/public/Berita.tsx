@@ -170,7 +170,7 @@ export default function Berita() {
           <>
             {featured.length > 0 && (
               <div className="mb-12">
-                <h2 className="text-lg font-bold text-[#0A3D2D] mb-4">3 Terbaru</h2>
+                <h2 className="text-lg font-bold text-[#0A3D2D] mb-4">Berita Terbaru</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {featured.map((item) => (
                     <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition">

@@ -38,6 +38,7 @@ export interface DataPenulis {
   username: string;
   namaLengkap: string;
   fotoProfil: string | null;
+  peran?: 'admin' | 'publikasi';
 }
 
 /** Data berita lengkap beserta informasi penulisnya. */

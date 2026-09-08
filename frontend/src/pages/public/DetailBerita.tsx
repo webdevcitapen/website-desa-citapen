@@ -17,6 +17,7 @@ interface DetailBeritaData {
   dibuatPada: string;
   penulis?: {
     namaLengkap: string;
+    peran?: 'admin' | 'publikasi';
   };
 }
 
@@ -121,7 +122,9 @@ interface DetailBeritaData {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-800">{berita.penulis?.namaLengkap || "Admin"}</p>
-                  <p className="text-xs text-slate-500">Pemerintah Desa Citapen</p>
+                  <p className="text-xs text-slate-500">
+                    {berita.penulis?.peran === 'publikasi' ? 'Tim Publikasi Desa Citapen' : 'Pemerintah Desa Citapen'}
+                  </p>
                 </div>
               </div>
             </div>

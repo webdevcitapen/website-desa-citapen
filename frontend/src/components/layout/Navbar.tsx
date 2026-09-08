@@ -17,7 +17,7 @@ export default function Navbar() {
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
             <Link to="/" className={`text-sm py-2 transition ${path === '/' ? 'font-bold text-slate-800 border-b-2 border-[#0A3D2D]' : 'font-semibold text-slate-500 hover:text-slate-800'}`}>Beranda</Link>
-            <Link to="/profil" className={`text-sm py-2 transition ${path.startsWith('/profil') ? 'font-bold text-slate-800 border-b-2 border-[#0A3D2D]' : 'font-semibold text-slate-500 hover:text-slate-800'}`}>Profil</Link>
+            <Link to="/profil" className={`text-sm py-2 transition ${path.startsWith('/profil') ? 'font-bold text-slate-800 border-b-2 border-[#0A3D2D]' : 'font-semibold text-slate-500 hover:text-slate-800'}`}>Profil Desa</Link>
             <Link to="/berita" className={`text-sm py-2 transition ${path.startsWith('/berita') ? 'font-bold text-slate-800 border-b-2 border-[#0A3D2D]' : 'font-semibold text-slate-500 hover:text-slate-800'}`}>Berita</Link>
             <Link to="/umkm" className={`text-sm py-2 transition ${path.startsWith('/umkm') ? 'font-bold text-slate-800 border-b-2 border-[#0A3D2D]' : 'font-semibold text-slate-500 hover:text-slate-800'}`}>UMKM</Link>
           </div>

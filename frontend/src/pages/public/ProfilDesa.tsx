@@ -170,22 +170,25 @@ export default function ProfilDesa() {
             <h2 className="text-3xl font-bold text-[#0A3D2D] mb-3">Visi & Misi</h2>
             <p className="text-sm text-slate-500 mb-12">Arah kebijakan dan tujuan pembangunan yang memandu langkah ke masa depan.</p>
 
-            <div className="mb-12 text-left">
+            <div className="mb-12 text-center flex flex-col items-center">
               <div className="inline-flex items-center gap-1.5 bg-[#1C4E35] text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full mb-5 tracking-wide shadow-sm">
                 Visi
               </div>
-              <h3 className="text-xl lg:text-[22px] italic font-semibold text-slate-800 leading-relaxed whitespace-pre-line">
+              <h3 className="text-xl lg:text-[22px] italic font-semibold text-slate-800 leading-relaxed whitespace-pre-line max-w-3xl mx-auto">
                 "{visiTampil}"
               </h3>
             </div>
 
-            <div className="text-left">
+            <div className="text-center flex flex-col items-center">
               <div className="inline-flex items-center gap-1.5 bg-[#FFD1BB] text-[#D3602D] text-[11px] font-bold px-3.5 py-1.5 rounded-full mb-5 tracking-wide shadow-sm">
                 Misi
               </div>
-              <ul className="space-y-3 text-sm lg:text-[15px] text-slate-600 leading-relaxed font-medium list-disc list-inside">
+              <ul className="space-y-3 text-sm lg:text-[15px] text-slate-600 leading-relaxed font-medium max-w-3xl mx-auto text-center">
                 {misiTampil.map((m, i) => (
-                  <li key={i}>{m}</li>
+                  <li key={i}>
+                    <span className="font-bold text-slate-800 mr-1.5">{i + 1}.</span>
+                    {m}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -433,7 +436,6 @@ export default function ProfilDesa() {
             <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center">
               <ImageIcon className="w-12 h-12 text-slate-300 mx-auto mb-3" />
               <p className="text-slate-500 text-sm font-medium">Belum ada foto galeri.</p>
-              <p className="text-slate-400 text-xs mt-1">Admin dapat menambah galeri via halaman Admin → Profil Desa → Galeri Desa.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

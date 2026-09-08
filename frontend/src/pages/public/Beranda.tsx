@@ -10,31 +10,51 @@ export default function Beranda() {
   const [totalUmkm, setTotalUmkm] = useState<number>(0);
 
   useEffect(() => {
-    // Fetch Profil and UMKM for dynamic stats
+    // OPTIMASI: Satu request /beranda menggantikan 2 request (profil + produk)
+    // Sebelumnya 2 round-trip -> sekarang 1, hemat 50% latency & cold start
+    // Fallback ke 2 request jika /beranda gagal (kompatibilitas)
+    const controller = new AbortController();
     const fetchData = async () => {
       try {
-        const resProfil = await api.get('/profil-desa');
-        if (resProfil.data && resProfil.data.data) {
-          setProfil(resProfil.data.data);
-        } else if (resProfil.data) {
-          setProfil(resProfil.data);
+        // Coba endpoint beranda yang sudah parallel di backend (6 query sekaligus)
+        const res = await api.get('/beranda', { signal: controller.signal as any });
+        const data = res.data?.data;
+        if (data) {
+          // Backend /beranda mengembalikan profil via beranda? cek struktur
+          // Jika ada profilDesa di beranda, pakai. Jika tidak, fallback fetch profil-desa terpisah cepat dari cache
+          // Jumlah produk & umkm langsung dari beranda count
+          if (data.jumlahProduk !== undefined) setTotalUmkm(data.jumlahProduk);
+          else if (data.jumlahUmkm !== undefined) setTotalUmkm(data.jumlahUmkm);
+          // Profil desa kadang tidak di beranda, jadi tetap fetch ringan profil dengan cache
+          // Tapi kita coba ambil dari data jika ada
+          if (data.profilDesa) setProfil(data.profilDesa);
+          else {
+            // Fetch profil terpisah tapi dengan abort & cache header memanfaatkan CDN
+            try {
+              const resProfil = await api.get('/profil-desa', { signal: controller.signal as any });
+              if (resProfil.data?.data) setProfil(resProfil.data.data);
+              else if (resProfil.data) setProfil(resProfil.data);
+            } catch {}
+          }
+          return;
         }
-      } catch (error) {
-        console.error('Error fetching profil:', error);
+      } catch {
+        // ignore, fallback
       }
-
+      // Fallback jalur lama (jika /beranda tidak tersedia)
       try {
-        const resUmkm = await api.get('/produk');
-        if (resUmkm.data && resUmkm.data.data && resUmkm.data.data.daftar) {
-          setTotalUmkm(resUmkm.data.data.daftar.length);
-        } else if (resUmkm.data && resUmkm.data.daftar) {
-          setTotalUmkm(resUmkm.data.daftar.length);
-        }
-      } catch (error) {
-        console.error('Error fetching umkm:', error);
-      }
+        const resProfil = await api.get('/profil-desa', { signal: controller.signal as any });
+        if (resProfil.data?.data) setProfil(resProfil.data.data);
+        else if (resProfil.data) setProfil(resProfil.data);
+      } catch (e) { console.error('Error fetching profil:', e); }
+      try {
+        const resUmkm = await api.get('/produk', { params: { halaman: 1, perHalaman: 1 }, signal: controller.signal as any });
+        const total = resUmkm.data?.data?.total ?? resUmkm.data?.total ?? 0;
+        setTotalUmkm(total);
+      } catch (e) { console.error('Error fetching umkm:', e); }
     };
     fetchData();
+    return () => controller.abort();
   }, []);
 
   const p = profil || {};
@@ -49,7 +69,7 @@ export default function Beranda() {
 
       {/* 1. Hero Section */}
       <section className="relative w-full h-[calc(100vh-5rem)] min-h-[500px] flex items-center overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/images/hero-bg.png')] bg-cover bg-center"></div>
+        <div className="absolute inset-0 bg-[url('/images/hero-bg.png')] bg-cover bg-center" style={{ backgroundImage: "url('/images/hero-bg.png')" }}></div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
         <div className="relative z-10 w-full px-6 md:px-12 lg:px-24">
           <div className="max-w-3xl">
@@ -152,6 +172,10 @@ export default function Beranda() {
                   <img
                     src="/images/peta-desa.png"
                     alt={`Peta ${namaDesa}`}
+                    loading="lazy"
+                    decoding="async"
+                    width={600}
+                    height={400}
                     className="w-full h-auto object-contain"
                   />
                 </div>

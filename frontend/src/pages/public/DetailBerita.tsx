@@ -128,7 +128,7 @@ interface DetailBeritaData {
 
             {/* Hero Image */}
             <div className="w-full aspect-[16/9] md:aspect-[21/9] bg-slate-100">
-              <img src={getImageUrl(berita.gambar)} alt={berita.judul} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
+              <img src={getImageUrl(berita.gambar, { width: 900 })} alt={berita.judul} loading="eager" decoding="async" fetchPriority="high" width={900} height={506} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
             </div>
 
             {/* Content Body */}

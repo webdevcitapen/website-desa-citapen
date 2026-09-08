@@ -17,8 +17,12 @@ export default function CardProduk({ id, foto, nama, harga, deskripsi, kategori 
     <div className="bg-[#F8F9FC] rounded-xl overflow-hidden border border-slate-100 flex flex-col">
       <div className="relative h-48 overflow-hidden bg-slate-200">
         <img
-          src={foto ? getImageUrl(foto) : '/placeholder.svg'}
+          src={foto ? getImageUrl(foto, { width: 600 }) : '/placeholder.svg'}
           alt={nama}
+          loading="lazy"
+          decoding="async"
+          width={600}
+          height={300}
           className="w-full h-full object-cover"
           onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder.svg'; }}
         />

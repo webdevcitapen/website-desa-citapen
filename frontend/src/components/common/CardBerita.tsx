@@ -18,8 +18,12 @@ export default function CardBerita({ id, gambar, judul, ringkasan, tanggal }: Ca
     <div className="bg-white rounded-xl overflow-hidden shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] flex flex-col">
       <div className="relative h-48 overflow-hidden bg-slate-200">
         <img
-          src={gambar ? getImageUrl(gambar) : '/placeholder.svg'}
+          src={gambar ? getImageUrl(gambar, { width: 600 }) : '/placeholder.svg'}
           alt={judul}
+          loading="lazy"
+          decoding="async"
+          width={600}
+          height={300}
           className="w-full h-full object-cover"
           onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder.svg'; }}
         />

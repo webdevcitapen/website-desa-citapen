@@ -26,13 +26,14 @@ export default function ProfilDesa() {
   const KECAMATAN = 'Hantara';
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchData = async () => {
       try {
         const results = await Promise.allSettled([
-          api.get('/profil-desa'),
-          api.get('/struktur-organisasi'),
-          api.get('/riwayat-kuwu'),
-          api.get('/galeri')
+          api.get('/profil-desa', { signal: controller.signal as any }),
+          api.get('/struktur-organisasi', { signal: controller.signal as any }),
+          api.get('/riwayat-kuwu', { signal: controller.signal as any }),
+          api.get('/galeri', { signal: controller.signal as any })
         ]);
         const [rProfil, rOrg, rRiwayat, rGaleri] = results;
 
@@ -75,6 +76,7 @@ export default function ProfilDesa() {
       }
     };
     fetchData();
+    return () => controller.abort();
   }, []);
 
   if (isLoading) {
@@ -263,7 +265,7 @@ export default function ProfilDesa() {
             {organisasi.map((org: any) => (
               <div key={org.id} className="bg-[#FBFBFF] p-5 rounded-2xl border border-slate-200 text-center w-full sm:w-[250px] hover:border-emerald-200 hover:shadow-md transition-all">
                 {org.foto ? (
-                  <img src={getImageUrl(org.foto)} alt={org.nama} className="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-white shadow" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                  <img src={getImageUrl(org.foto, { width: 200 })} alt={org.nama} loading="lazy" decoding="async" width={80} height={80} className="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-white shadow" onError={(e) => (e.currentTarget.style.display = 'none')} />
                 ) : (
                   <div className="w-20 h-20 rounded-full bg-[#E8F3EF] flex items-center justify-center mx-auto mb-3 text-[#0A3D2D] font-bold text-xl">
                     {org.nama.charAt(0).toUpperCase()}
@@ -338,8 +340,12 @@ export default function ProfilDesa() {
                 <div key={item.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
                   <div className="relative h-56 overflow-hidden bg-slate-100">
                     <img
-                      src={getImageUrl(item.foto)}
+                      src={getImageUrl(item.foto, { width: 600 })}
                       alt={item.judul || 'Galeri Desa Citapen'}
+                      loading="lazy"
+                      decoding="async"
+                      width={600}
+                      height={400}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => (e.currentTarget.src = '/placeholder.svg')}
                     />

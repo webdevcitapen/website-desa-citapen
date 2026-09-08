@@ -156,8 +156,8 @@ export async function ubahBerita(
     throw new KesalahanTidakDitemukan('Berita tidak ditemukan');
   }
 
-  // Admin desa boleh mengubah semua berita, selain itu harus penulisnya
-  if (peran !== 'admin' && berita.penulis?.id !== penggunaId) {
+  // Hanya penulis berita yang boleh mengubah berita
+  if (berita.penulis?.id !== penggunaId) {
     throw new KesalahanOtorisasi('Anda hanya dapat mengubah berita milik Anda');
   }
 

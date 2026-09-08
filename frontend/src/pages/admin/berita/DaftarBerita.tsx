@@ -130,7 +130,12 @@ export default function DaftarBerita() {
     return new Date(t).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  const canManage = (item: BeritaItem) => {
+  const canEdit = (item: BeritaItem) => {
+    if (!userProfile) return false;
+    return item.penulis?.id === userProfile.id;
+  };
+
+  const canDelete = (item: BeritaItem) => {
     if (!userProfile) return false;
     if (userProfile.peran === 'admin') return true;
     return item.penulis?.id === userProfile.id;
@@ -244,24 +249,25 @@ export default function DaftarBerita() {
                     {/* AKSI */}
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-3">
-                        {canManage(item) ? (
-                          <>
-                            <Link 
-                              to={`/admin/berita/edit/${item.id}`} 
-                              className="text-slate-400 hover:text-[#0A3D2D] transition-colors p-1.5 hover:bg-slate-100 rounded"
-                              title="Edit Berita"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </Link>
-                            <button 
-                              onClick={() => setDeleteConfirm(item.id)}
-                              className="text-slate-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded"
-                              title="Hapus Berita"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </>
-                        ) : (
+                        {canEdit(item) && (
+                          <Link 
+                            to={`/admin/berita/edit/${item.id}`} 
+                            className="text-slate-400 hover:text-[#0A3D2D] transition-colors p-1.5 hover:bg-slate-100 rounded"
+                            title="Edit Berita"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Link>
+                        )}
+                        {canDelete(item) && (
+                          <button 
+                            onClick={() => setDeleteConfirm(item.id)}
+                            className="text-slate-400 hover:text-red-500 transition-colors p-1.5 hover:bg-red-50 rounded"
+                            title="Hapus Berita"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        {!canEdit(item) && !canDelete(item) && (
                           <span className="text-[11px] font-medium text-slate-400 italic">Hanya Penulis</span>
                         )}
                       </div>

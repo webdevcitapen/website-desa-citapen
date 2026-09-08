@@ -21,6 +21,30 @@ interface DetailBeritaData {
   };
 }
 
+const renderIsiDenganLink = (text: string) => {
+  if (!text) return null;
+  const urlRegex = /((?:https?:\/\/|www\.)[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      const href = part.startsWith('www.') ? `https://${part}` : part;
+      return (
+        <a 
+          key={index} 
+          href={href} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-[#0A3D2D] hover:text-emerald-700 font-semibold underline underline-offset-4 decoration-emerald-500/40 hover:decoration-emerald-600 transition-all break-all"
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+};
+
   export default function DetailBerita() {
     const { id } = useParams<{ id: string }>();
     const [berita, setBerita] = useState<DetailBeritaData | null>(null);
@@ -137,7 +161,7 @@ interface DetailBeritaData {
             {/* Content Body */}
             <div className="p-6 md:p-10 pt-8 text-slate-700">
               <div className="text-[15px] md:text-base leading-relaxed text-slate-800 whitespace-pre-wrap">
-                {berita.isi}
+                {renderIsiDenganLink(berita.isi)}
               </div>
             </div>
 

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, User, Newspaper, Store } from 'lucide-react';
+import { Home, Landmark, Newspaper, Store } from 'lucide-react';
 
 export default function BottomNav() {
   const location = useLocation();
@@ -16,9 +16,9 @@ export default function BottomNav() {
       
       <Link to="/profil" className={`min-w-16 flex flex-col items-center gap-1 ${path.startsWith('/profil') ? 'text-[#0A3D2D]' : 'text-slate-500'}`}>
         <div className={`p-2 rounded-full transition-colors ${path === '/profil' ? 'bg-[#0A3D2D] text-white shadow-md' : 'hover:bg-slate-50'}`}>
-          <User className="w-5 h-5" />
+          <Landmark className="w-5 h-5" />
         </div>
-        <span className="text-[10px] font-bold">Profile</span>
+        <span className="text-[10px] font-bold">Profil Desa</span>
       </Link>
       
       <Link to="/berita" className={`min-w-16 flex flex-col items-center gap-1 ${path.startsWith('/berita') ? 'text-[#0A3D2D]' : 'text-slate-500'}`}>

@@ -127,14 +127,9 @@ export default function Login() {
 
           {/* Password Field */}
           <div className="mb-4">
-            <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-[11px] font-bold text-slate-800" htmlFor="password">
-                Kata Sandi
-              </label>
-              <button type="button" className="text-[10px] md:text-[11px] font-bold text-slate-500 hover:text-[#0A3D2D] transition-colors">
-                Lupa kata sandi?
-              </button>
-            </div>
+            <label className="block text-[11px] font-bold text-slate-800 mb-1.5" htmlFor="password">
+              Kata Sandi
+            </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <Lock className="h-4 w-4" />

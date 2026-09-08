@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Mountain, Store, MapPin, Mail, Phone, Car, Sparkles, Landmark } from 'lucide-react';
 import Navbar from '../../components/layout/Navbar';
+import Footer from '../../components/layout/Footer';
 import BottomNav from '../../components/layout/BottomNav';
 import api from '../../services/api';
 
@@ -58,7 +59,7 @@ export default function Beranda() {
   }, []);
 
   const p = profil || {};
-  const luasWilayah = p.luasWilayah || p.luas_wilayah || '473,30';
+  const luasWilayah = p.luasWilayah || p.luas_wilayah || '-';
   const visi = p.visi || 'Mewujudkan masyarakat desa yang sejahtera, mandiri, dan berbudaya melalui tata kelola yang transparan dan inovatif.';
   const telepon = p.telepon || '0831 9335 5962';
   const namaDesa = p.nama_desa || 'Desa Citapen';
@@ -110,7 +111,7 @@ export default function Beranda() {
               <Mountain className="w-5 h-5 text-emerald-700" />
             </div>
             <p className="text-sm text-slate-500 font-medium mb-1">Luas Wilayah</p>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2 break-words">{luasWilayah} Ha</h3>
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2 break-words">{luasWilayah}</h3>
             <p className="text-[11px] text-slate-500 mt-auto flex items-center gap-1"><MapPin className="w-3 h-3" /> Berdasarkan Data Profil</p>
           </div>
 
@@ -190,60 +191,7 @@ export default function Beranda() {
       </section>
 
       {/* 4. Footer */}
-      <footer className="bg-[#022c22] text-white py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row justify-between gap-10 lg:gap-12">
-
-            {/* Brand & Visi */}
-            <div className="max-w-xl">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-white/10 rounded flex items-center justify-center p-1">
-                  <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain" />
-                </div>
-                <h2 className="text-lg sm:text-2xl font-bold tracking-tight break-words">{namaDesa}, Kecamatan {p.kecamatan || 'Hantara'}, Kabupaten {p.kabupaten || 'Kuningan'}</h2>
-              </div>
-              <p className="text-sm text-emerald-100/70 leading-relaxed mb-10 max-w-md">
-                {visi}
-              </p>
-              <p className="text-[10px] text-emerald-100/50">
-                © 2026 KKM UMC Mahasiswa Teknik Informatika. All rights reserved.
-              </p>
-            </div>
-
-            {/* Kontak */}
-            <div className="lg:w-80 shrink-0">
-              <h3 className="font-semibold text-xs text-emerald-100/50 uppercase tracking-wider mb-6">Kontak</h3>
-              <ul className="space-y-4">
-                <li className="flex items-center gap-4 text-sm text-emerald-100/90">
-                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                    <Mail className="w-4 h-4 text-emerald-100/70" />
-                  </div>
-                  <span>pemdes{namaDesa.toLowerCase().replace('desa ', '')}@gmail.com</span>
-                </li>
-                <li className="flex items-center gap-4 text-sm text-emerald-100/90">
-                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4 text-emerald-100/70" />
-                  </div>
-                  <span>{namaDesa.toUpperCase().replace('DESA ', '')} MAJU KA BALE</span>
-                </li>
-                <li className="flex items-center gap-4 text-sm text-emerald-100/90">
-                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                    <Landmark className="w-4 h-4 text-emerald-100/70" />
-                  </div>
-                  <span>Pemdes {namaDesa.replace('Desa ', '')}</span>
-                </li>
-                <li className="flex items-center gap-4 text-sm text-emerald-100/90">
-                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0">
-                    <Phone className="w-4 h-4 text-emerald-100/70" />
-                  </div>
-                  <span>{telepon}</span>
-                </li>
-              </ul>
-            </div>
-
-          </div>
-        </div>
-      </footer>
+      <Footer profil={p} />
 
       {/* Bottom Nav khusus mobile */}
       <BottomNav />

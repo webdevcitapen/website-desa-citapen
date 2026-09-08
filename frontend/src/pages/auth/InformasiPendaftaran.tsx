@@ -96,10 +96,15 @@ export default function InformasiPendaftaran() {
         {/* Button */}
         <button 
           onClick={handleWhatsApp}
-          className="w-full flex items-center justify-center gap-2 bg-[#0A3D2D] hover:bg-[#082d22] text-white py-3.5 rounded-xl font-bold text-sm transition-colors shadow-lg shadow-[#0A3D2D]/20"
+          className="w-full flex flex-col items-center justify-center gap-1 bg-[#0A3D2D] hover:bg-[#082d22] text-white py-3 rounded-xl transition-colors shadow-lg shadow-[#0A3D2D]/20"
         >
-          <MessageSquare className="w-5 h-5" />
-          Chat Admin via WhatsApp
+          <div className="flex items-center gap-2 font-bold text-sm">
+            <MessageSquare className="w-5 h-5" />
+            Chat Admin via WhatsApp
+          </div>
+          <span className="text-xs text-emerald-100 font-medium opacity-90">
+            {noWa === '6281234567890' ? 'Memuat kontak admin...' : `(+${noWa})`}
+          </span>
         </button>
 
       </div>

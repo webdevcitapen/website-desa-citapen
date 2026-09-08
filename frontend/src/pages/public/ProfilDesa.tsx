@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Map, Image as ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Map, Image as ImageIcon, X, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BottomNav from '../../components/layout/BottomNav';
@@ -201,39 +201,65 @@ export default function ProfilDesa() {
           <div className="grid lg:grid-cols-[1fr_2fr] gap-6">
             {/* Luas Wilayah */}
             <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.05)] flex flex-col items-center justify-center">
-              <div className="w-12 h-12 bg-[#E8F3EF] rounded-xl flex items-center justify-center mb-4">
-                <Map className="w-6 h-6 text-[#0A3D2D]" />
+              <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-5">
+                <Map className="w-7 h-7 text-[#0A3D2D]" />
               </div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Total Luas Wilayah</p>
-              <p className="text-4xl font-bold text-slate-800">
-                {p.luasWilayah || '0'}
-                <br />
-                <span className="text-lg text-slate-500 font-medium">Ha / km²</span>
-              </p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Total Luas Wilayah</p>
+              <div className="text-center">
+                <span className="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight">
+                  {p.luasWilayah || '-'}
+                </span>
+                {(() => {
+                  const raw = p.luasWilayah || '';
+                  const match = raw.match(/[\d,.]+/);
+                  if (match) {
+                    const cleanNum = match[0].replace(/\./g, '').replace(',', '.');
+                    const num = parseFloat(cleanNum);
+                    if (!isNaN(num) && num > 0) {
+                      return (
+                        <div className="mt-4">
+                          <span className="inline-flex items-center gap-1.5 bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg text-sm font-semibold border border-slate-100 shadow-sm">
+                            ≈ {(num / 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })} km²
+                          </span>
+                        </div>
+                      );
+                    }
+                  }
+                  return null;
+                })()}
+              </div>
             </div>
 
             {/* Batas Wilayah */}
             <div className="bg-[#F8F9FC] rounded-3xl p-8 border border-slate-100 text-left">
               <div className="flex items-center gap-3 mb-6">
-                <Map className="w-5 h-5 text-slate-600" />
+                <Map className="w-5 h-5 text-[#0A3D2D]" />
                 <h3 className="text-lg font-bold text-slate-800">Batas Wilayah</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-white p-3 lg:p-4 rounded-2xl border border-slate-100 flex justify-between items-center gap-4">
-                  <span className="bg-[#EBF1FF] text-[#3460DC] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider whitespace-nowrap">Utara (Kaler)</span>
-                  <span className="text-xs lg:text-sm font-medium text-slate-700 text-right">{p.batasUtara || '-'}</span>
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-2 hover:border-emerald-200 hover:shadow-md transition-all">
+                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider w-max">Utara</span>
+                  <span className="text-sm font-semibold text-slate-700 leading-snug">
+                    {p.batasUtara || '-'}
+                  </span>
                 </div>
-                <div className="bg-white p-3 lg:p-4 rounded-2xl border border-slate-100 flex justify-between items-center gap-4">
-                  <span className="bg-[#EBF1FF] text-[#3460DC] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider whitespace-nowrap">Selatan (Kidul)</span>
-                  <span className="text-xs lg:text-sm font-medium text-slate-700 text-right">{p.batasSelatan || '-'}</span>
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-2 hover:border-emerald-200 hover:shadow-md transition-all">
+                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider w-max">Selatan</span>
+                  <span className="text-sm font-semibold text-slate-700 leading-snug">
+                    {p.batasSelatan || '-'}
+                  </span>
                 </div>
-                <div className="bg-white p-3 lg:p-4 rounded-2xl border border-slate-100 flex justify-between items-center gap-4">
-                  <span className="bg-[#EBF1FF] text-[#3460DC] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider whitespace-nowrap">Barat (Kulon)</span>
-                  <span className="text-xs lg:text-sm font-medium text-slate-700 text-right">{p.batasBarat || '-'}</span>
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-2 hover:border-emerald-200 hover:shadow-md transition-all">
+                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider w-max">Barat</span>
+                  <span className="text-sm font-semibold text-slate-700 leading-snug">
+                    {p.batasBarat || '-'}
+                  </span>
                 </div>
-                <div className="bg-white p-3 lg:p-4 rounded-2xl border border-slate-100 flex justify-between items-center gap-4">
-                  <span className="bg-[#EBF1FF] text-[#3460DC] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider whitespace-nowrap">Timur (Wetan)</span>
-                  <span className="text-xs lg:text-sm font-medium text-slate-700 text-right">{p.batasTimur || '-'}</span>
+                <div className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col gap-2 hover:border-emerald-200 hover:shadow-md transition-all">
+                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider w-max">Timur</span>
+                  <span className="text-sm font-semibold text-slate-700 leading-snug">
+                    {p.batasTimur || '-'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -259,30 +285,102 @@ export default function ProfilDesa() {
       </section>
 
       {/* 4. Struktur Organisasi */}
-      <section className="py-16 bg-white border-t border-slate-100">
+      <section className="py-16 bg-[#F8FAFC] border-t border-slate-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl lg:text-3xl font-bold text-[#0A3D2D] mb-3 text-left">Struktur Organisasi</h2>
-          <p className="text-sm text-slate-500 mb-12 text-left">Perangkat Pemerintah Desa yang bertugas melayani masyarakat.</p>
-
-          <div className="w-full flex flex-wrap justify-center gap-4">
-            {organisasi.map((org: any) => (
-              <div key={org.id} className="bg-[#FBFBFF] p-5 rounded-2xl border border-slate-200 text-center w-full sm:w-[250px] hover:border-emerald-200 hover:shadow-md transition-all">
-                {org.foto ? (
-                  <img src={getImageUrl(org.foto, { width: 200 })} alt={org.nama} loading="lazy" decoding="async" width={80} height={80} className="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-white shadow" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-[#E8F3EF] flex items-center justify-center mx-auto mb-3 text-[#0A3D2D] font-bold text-xl">
-                    {org.nama.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <h3 className="font-bold text-slate-800 text-sm mb-1">{org.nama}</h3>
-                <p className="text-xs text-[#0A3D2D] font-bold mb-1">{org.jabatan}</p>
-                {org.keterangan && <p className="text-[10px] text-slate-400 line-clamp-2">{org.keterangan}</p>}
-              </div>
-            ))}
-            {organisasi.length === 0 && (
-              <p className="text-slate-500 text-sm">Belum ada struktur organisasi.</p>
-            )}
+          <div className="text-center mb-12">
+            <h2 className="text-2xl lg:text-3xl font-bold text-[#0A3D2D] mb-3">Struktur Organisasi</h2>
+            <p className="text-sm text-slate-500">Perangkat Pemerintah Desa yang bertugas melayani masyarakat.</p>
           </div>
+
+          {organisasi.length === 0 ? (
+            <p className="text-slate-500 text-sm text-center">Belum ada struktur organisasi.</p>
+          ) : (
+            <div className="flex flex-col items-center w-full">
+              {(() => {
+                const getRoleLevel = (jabatan: string = '') => {
+                  const j = jabatan.toLowerCase();
+                  if (j.includes('kepala desa') || j.includes('kuwu')) return 1;
+                  if (j.includes('sekretaris') || j.includes('sekdes')) return 2;
+                  if (j.includes('dusun') || j.includes('kadus')) return 4;
+                  return 3; // Kasi, Kaur, and others
+                };
+
+                const level1 = organisasi.filter(o => getRoleLevel(o.jabatan) === 1);
+                const level2 = organisasi.filter(o => getRoleLevel(o.jabatan) === 2);
+                const level3 = organisasi.filter(o => getRoleLevel(o.jabatan) === 3);
+                const level4 = organisasi.filter(o => getRoleLevel(o.jabatan) === 4);
+
+                const renderCard = (org: any, isLevel1: boolean = false) => (
+                  <div key={org.id} className={`bg-white p-5 rounded-2xl text-center relative hover:-translate-y-1 transition-all duration-300 ${isLevel1 ? 'border-2 border-[#0A3D2D] shadow-xl w-[280px] z-10' : 'border border-slate-200 shadow-sm hover:shadow-md w-full sm:w-[250px]'}`}>
+                    {org.foto ? (
+                      <img src={getImageUrl(org.foto, { width: 200 })} alt={org.nama} loading="lazy" decoding="async" className={`${isLevel1 ? 'w-24 h-24' : 'w-20 h-20'} rounded-full object-cover mx-auto mb-4 border-4 border-white shadow-md`} onError={(e) => (e.currentTarget.style.display = 'none')} />
+                    ) : (
+                      <div className={`${isLevel1 ? 'w-24 h-24 text-3xl' : 'w-20 h-20 text-2xl'} rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4 text-emerald-600 font-bold shadow-inner border-4 border-white`}>
+                        <User className={isLevel1 ? 'w-10 h-10' : 'w-8 h-8'} />
+                      </div>
+                    )}
+                    <h3 className={`font-bold text-slate-800 ${isLevel1 ? 'text-lg' : 'text-sm'} mb-2`}>{org.nama}</h3>
+                    <div className="mb-2">
+                      <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold inline-block border border-emerald-100">
+                        {org.jabatan}
+                      </span>
+                    </div>
+                    {org.keterangan && <p className="text-[10px] text-slate-400 line-clamp-2 mt-2">{org.keterangan}</p>}
+                  </div>
+                );
+
+                return (
+                  <div className="flex flex-col items-center w-full">
+                    {/* Tingkat 1: Kepala Desa */}
+                    {level1.length > 0 && (
+                      <div className="flex flex-col items-center w-full">
+                        <div className="flex justify-center w-full">
+                          {level1.map(org => renderCard(org, true))}
+                        </div>
+                        {/* Connecting Line */}
+                        {(level2.length > 0 || level3.length > 0) && (
+                          <div className="w-0.5 h-8 bg-emerald-300/50"></div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Tingkat 2: Sekretaris Desa */}
+                    {level2.length > 0 && (
+                      <div className="flex flex-col items-center w-full">
+                        <div className="flex justify-center w-full gap-6">
+                          {level2.map(org => renderCard(org))}
+                        </div>
+                        {/* Connecting Line */}
+                        {(level3.length > 0 || level4.length > 0) && (
+                          <div className="w-0.5 h-8 bg-slate-300"></div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Tingkat 3: Kasi & Kaur */}
+                    {level3.length > 0 && (
+                      <div className="flex flex-col items-center w-full">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl justify-items-center">
+                          {level3.map(org => renderCard(org))}
+                        </div>
+                        {/* Connecting Line */}
+                        {level4.length > 0 && (
+                          <div className="w-0.5 h-8 bg-slate-300 mt-6"></div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Tingkat 4: Kepala Dusun */}
+                    {level4.length > 0 && (
+                      <div className="flex justify-center flex-wrap gap-6 w-full max-w-3xl">
+                        {level4.map(org => renderCard(org))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
       </section>
 

@@ -333,50 +333,46 @@ export default function ProfilDesa() {
                 );
 
                 return (
-                  <div className="flex flex-col items-center w-full">
+                  <div className="flex flex-col items-center w-full gap-8 sm:gap-12">
                     {/* Tingkat 1: Kepala Desa */}
                     {level1.length > 0 && (
                       <div className="flex flex-col items-center w-full">
                         <div className="flex justify-center w-full">
                           {level1.map(org => renderCard(org, true))}
                         </div>
-                        {/* Connecting Line */}
-                        {(level2.length > 0 || level3.length > 0) && (
-                          <div className="w-0.5 h-8 bg-emerald-300/50"></div>
-                        )}
                       </div>
                     )}
 
                     {/* Tingkat 2: Sekretaris Desa */}
                     {level2.length > 0 && (
                       <div className="flex flex-col items-center w-full">
-                        <div className="flex justify-center w-full gap-6">
+                        <div className="flex justify-center w-full">
                           {level2.map(org => renderCard(org))}
                         </div>
-                        {/* Connecting Line */}
-                        {(level3.length > 0 || level4.length > 0) && (
-                          <div className="w-0.5 h-8 bg-slate-300"></div>
-                        )}
                       </div>
                     )}
 
                     {/* Tingkat 3: Kasi & Kaur */}
                     {level3.length > 0 && (
                       <div className="flex flex-col items-center w-full">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl justify-items-center">
+                        <div className="bg-slate-100 text-slate-500 text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-widest shadow-sm">
+                          Kepala Seksi & Urusan
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 w-full max-w-4xl justify-items-center">
                           {level3.map(org => renderCard(org))}
                         </div>
-                        {/* Connecting Line */}
-                        {level4.length > 0 && (
-                          <div className="w-0.5 h-8 bg-slate-300 mt-6"></div>
-                        )}
                       </div>
                     )}
 
                     {/* Tingkat 4: Kepala Dusun */}
                     {level4.length > 0 && (
-                      <div className="flex justify-center flex-wrap gap-6 w-full max-w-3xl">
-                        {level4.map(org => renderCard(org))}
+                      <div className="flex flex-col items-center w-full">
+                        <div className="bg-slate-100 text-slate-500 text-[10px] sm:text-xs font-bold px-4 py-1.5 rounded-full mb-6 uppercase tracking-widest shadow-sm">
+                          Kepala Dusun
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 w-full max-w-2xl justify-items-center">
+                          {level4.map(org => renderCard(org))}
+                        </div>
                       </div>
                     )}
                   </div>

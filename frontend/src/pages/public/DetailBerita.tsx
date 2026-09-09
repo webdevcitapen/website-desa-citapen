@@ -17,6 +17,7 @@ interface DetailBeritaData {
   dibuatPada: string;
   penulis?: {
     namaLengkap: string;
+    fotoProfil?: string;
     peran?: 'admin' | 'publikasi';
   };
 }
@@ -141,7 +142,10 @@ const renderIsiDenganLink = (text: string) => {
 
               {/* Author */}
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#1C4E35] text-white flex items-center justify-center font-bold text-sm uppercase">
+                {berita.penulis?.fotoProfil ? (
+                  <img src={getImageUrl(berita.penulis.fotoProfil, { width: 100 })} alt={berita.penulis.namaLengkap} className="w-10 h-10 rounded-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
+                ) : null}
+                <div className={`w-10 h-10 rounded-full bg-[#1C4E35] text-white flex items-center justify-center font-bold text-sm uppercase ${berita.penulis?.fotoProfil ? 'hidden' : ''}`}>
                   {(berita.penulis?.namaLengkap || "A")[0]}
                 </div>
                 <div>

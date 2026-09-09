@@ -127,7 +127,7 @@ export default function Berita() {
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-12 pb-24">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-[#0A3D2D] mb-3">Berita Desa Terkini</h1>
-          <p className="text-slate-600 max-w-2xl text-sm md:text-base leading-relaxed">Dapatkan informasi terbaru mengenai program desa, kegiatan masyarakat, dan pengumuman penting di Desa Citapen.</p>
+          <p className="text-slate-600 max-w-2xl text-sm md:text-base leading-relaxed">Dapatkan informasi terbaru mengenai Desa Citapen.</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 md:p-5 mb-8">
@@ -178,7 +178,7 @@ export default function Berita() {
                         <img src={getImageUrl(item.gambar, { width: 600 })} alt={item.judul} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
                       </div>
                       <div className="p-5 flex flex-col flex-grow">
-                        <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2"><Calendar className="w-3.5 h-3.5" />{formatTanggal(item.dibuatPada || (item as any).dibuat_pada)}</div>
+                        <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2"><Calendar className="w-3.5 h-3.5" />{formatTanggal(item.dibuatPada || (item as any).dibuat_pada)}{item.kategori && <span className="ml-2 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold">{item.kategori}</span>}</div>
                         <h3 className="text-base font-bold text-slate-800 mb-2 line-clamp-2 leading-tight">{item.judul}</h3>
                         <p className="text-slate-500 text-xs line-clamp-3 leading-relaxed flex-grow mb-3">{item.isi}</p>
                         <Link to={`/berita/${item.id}`} className="inline-flex items-center gap-1.5 text-[#0A3D2D] font-bold text-xs hover:underline mt-auto">Baca Selengkapnya <ArrowRight className="w-3 h-3" /></Link>

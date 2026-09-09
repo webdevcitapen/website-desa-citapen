@@ -13,6 +13,7 @@ export default function FormBerita() {
   const [isi, setIsi] = useState('');
   const [gambar, setGambar] = useState<File | null>(null);
   const [gambarPreview, setGambarPreview] = useState<string | null>(null);
+  const [kategori, setKategori] = useState('Pilih Kategori');
   const [namaPenulis, setNamaPenulis] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +42,7 @@ export default function FormBerita() {
           if (berita) {
             setJudul(berita.judul);
             setIsi(berita.isi);
+            setKategori(berita.kategori || 'Pilih Kategori');
             setGambarPreview(getImageUrl(berita.gambar));
           }
         } catch (err: any) {
@@ -95,6 +97,9 @@ export default function FormBerita() {
       const formData = new FormData();
       formData.append('judul', judul);
       formData.append('isi', isi);
+      if (kategori && kategori !== 'Pilih Kategori') {
+        formData.append('kategori', kategori);
+      }
       if (gambar) {
         formData.append('gambar', gambar);
       }
@@ -188,6 +193,8 @@ export default function FormBerita() {
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">Kategori</label>
               <select 
+                value={kategori}
+                onChange={(e) => setKategori(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600 outline-none focus:border-[#0A3D2D] appearance-none cursor-pointer"
                 style={{
                   backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
@@ -196,11 +203,14 @@ export default function FormBerita() {
                   backgroundSize: '1em'
                 }}
               >
-                <option>Pilih Kategori</option>
-                <option>Infrastruktur</option>
-                <option>Kesehatan</option>
-                <option>Pendidikan</option>
-                <option>Umum</option>
+                <option value="Pilih Kategori" disabled>Pilih Kategori</option>
+                <option>Pendidikan & Literasi</option>
+                <option>Kesehatan & Lingkungan</option>
+                <option>Ekonomi & UMKM</option>
+                <option>Teknologi & Inovasi</option>
+                <option>Sosial & Keagamaan</option>
+                <option>Pembangunan & Infrastruktur</option>
+                <option>Kegiatan Desa & Umum</option>
               </select>
             </div>
             
@@ -267,7 +277,7 @@ export default function FormBerita() {
               minLength={20}
             />
             <p className="mt-2 text-xs text-slate-400">
-              Isi berita hanya mendukung teks biasa.
+              Isi berita hanya mendukung teks biasa dan tautan.
             </p>
           </div>
 

@@ -182,14 +182,14 @@ export default function Berita() {
                 <h2 className="text-lg font-bold text-[#0A3D2D] mb-4">Berita Terbaru</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {featured.map((item) => (
-                    <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition">
+                    <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col h-[380px] hover:shadow-md transition">
                       <div className="h-48 w-full overflow-hidden bg-slate-100">
                         <img src={getImageUrl(item.gambar, { width: 600 })} alt={item.judul} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
                       </div>
                       <div className="p-5 flex flex-col flex-grow">
                         <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-2"><Calendar className="w-3.5 h-3.5" />{formatTanggal(item.dibuatPada || (item as any).dibuat_pada)}{item.kategori && <span className="ml-2 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold">{item.kategori}</span>}</div>
                         <h3 className="text-base font-bold text-slate-800 mb-2 line-clamp-2 leading-tight">{item.judul}</h3>
-                        <p className="text-slate-500 text-xs line-clamp-3 leading-relaxed flex-grow mb-3">{item.isi}</p>
+                        <p className="text-slate-500 text-xs line-clamp-3 leading-relaxed flex-grow mb-3 overflow-hidden">{item.isi}</p>
                         <Link to={`/berita/${item.id}`} className="inline-flex items-center gap-1.5 text-[#0A3D2D] font-bold text-xs hover:underline mt-auto">Baca Selengkapnya <ArrowRight className="w-3 h-3" /></Link>
                       </div>
                     </div>
@@ -206,14 +206,14 @@ export default function Berita() {
                 <>
                   <div className="space-y-4">
                     {rest.map((item) => (
-                      <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col sm:flex-row hover:shadow-md transition">
-                        <div className="sm:w-48 h-48 sm:h-auto w-full bg-slate-100 shrink-0 overflow-hidden">
+                      <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col sm:flex-row sm:h-56 hover:shadow-md transition">
+                          <div className="sm:w-64 h-48 sm:h-full w-full bg-slate-100 shrink-0 overflow-hidden">
                           <img src={getImageUrl(item.gambar, { width: 400 })} alt={item.judul} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
                         </div>
                         <div className="p-5 flex flex-col flex-grow">
                           <div className="flex items-center gap-2 text-slate-400 text-xs font-medium mb-2"><Calendar className="w-3.5 h-3.5" />{formatTanggal(item.dibuatPada || (item as any).dibuat_pada, { day: 'numeric', month: 'short', year: 'numeric' })}{item.kategori && <span className="ml-2 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-bold">{item.kategori}</span>}</div>
                           <h3 className="text-base font-bold text-slate-800 mb-2 line-clamp-1">{item.judul}</h3>
-                          <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed flex-grow">{item.isi}</p>
+                          <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed flex-grow overflow-hidden">{item.isi}</p>
                           <Link to={`/berita/${item.id}`} className="inline-flex items-center gap-1.5 text-[#0A3D2D] font-bold text-xs hover:underline mt-3">Baca Selengkapnya <ArrowRight className="w-3 h-3" /></Link>
                         </div>
                       </div>
@@ -240,3 +240,4 @@ export default function Berita() {
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Mountain, Store, MapPin, Car, ArrowRight } from 'lucide-react';
+import { Users, Mountain, Store, MapPin, Car } from 'lucide-react';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BottomNav from '../../components/layout/BottomNav';
@@ -69,24 +69,22 @@ export default function Beranda() {
       <Navbar />
 
       {/* 1. Hero Section */}
-      <section className="relative w-full min-h-[85vh] sm:min-h-[520px] max-h-[760px] flex items-center overflow-hidden justify-center sm:justify-start">
+      <section className="relative w-full min-h-[520px] h-[calc(100svh-4rem)] max-h-[760px] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('/images/hero-bg.png')] bg-cover bg-center" style={{ backgroundImage: "url('/images/hero-bg.png')" }}></div>
-        <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-black/85 via-black/40 sm:via-black/50 to-transparent"></div>
-        <div className="relative z-10 w-full px-6 sm:px-12 lg:px-24 flex flex-col items-center sm:items-start text-center sm:text-left">
-          <div className="max-w-sm sm:max-w-3xl flex flex-col items-center sm:items-start">
-            <span className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium mb-3">
-              🌿 Portal Resmi Desa Citapen
-            </span>
-            <h1 className="text-2xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-snug mb-3 sm:mb-6 drop-shadow-lg">
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
+        <div className="relative z-10 w-full px-4 sm:px-6 md:px-12 lg:px-24">
+          <div className="max-w-3xl">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white mb-5 sm:mb-6 leading-tight drop-shadow-lg">
               Selamat Datang di<br />{namaDesa}
             </h1>
-            <p className="text-xs sm:text-sm lg:text-lg text-gray-200 line-clamp-3 max-w-sm mx-auto sm:mx-0 sm:max-w-2xl drop-shadow-md mb-2 sm:mb-8 leading-relaxed">
+            <p className="text-sm sm:text-base lg:text-lg text-white/90 drop-shadow-md mb-8 leading-relaxed max-w-2xl">
               {visi}
             </p>
-            <Link to="/profil" className="w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm shadow-lg shadow-emerald-900/30 transition-all active:scale-95 mx-auto sm:mx-0 mt-4">
-              Jelajahi Profil Desa
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <Link to="/profil" className="bg-[#082d22] hover:bg-emerald-900 text-white font-semibold py-3 px-5 sm:px-8 rounded-lg text-center transition-colors shadow-lg text-sm tracking-wide">
+                Jelajahi Profil Desa
+              </Link>
+            </div>
           </div>
         </div>
       </section>

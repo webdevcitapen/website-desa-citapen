@@ -12,8 +12,8 @@ export default function ProfilAdmin() {
   const [isSavingGaleri, setIsSavingGaleri] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('Perubahan berhasil disimpan ke database.');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+    const [isLoading, setIsLoading] = useState(true);
 
   // Form Data Profil Desa (Geografis)
   const [luasWilayah, setLuasWilayah] = useState('');
@@ -52,10 +52,21 @@ export default function ProfilAdmin() {
   const [previewGaleri, setPreviewGaleri] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const showToastMsg = (msg: string) => {
+  const showToastMsg = (msg: string, type: 'success' | 'error' = 'success') => {
     setToastMsg(msg);
+    setToastType(type);
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+    setTimeout(() => setShowToast(false), 5000);
+  };
+
+  const handleError = (err: any, fallbackMsg: string) => {
+    const pesan = err?.response?.data?.pesan || fallbackMsg;
+    const detail = err?.response?.data?.detail;
+    if (Array.isArray(detail) && detail.length > 0) {
+      showToastMsg(`${pesan}:\n${detail.join('\n')}`, 'error');
+    } else {
+      showToastMsg(pesan, 'error');
+    }
   };
 
   const fetchData = async () => {
@@ -109,7 +120,7 @@ export default function ProfilAdmin() {
       }
     } catch (err) {
       console.error('Gagal mengambil data profil', err);
-      setError('Gagal memuat data dari server');
+      showToastMsg('Gagal memuat data dari server', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +133,7 @@ export default function ProfilAdmin() {
   // Handler Profil Desa Geografis
   const handleSaveProfil = async () => {
     setIsSaving(true);
-    setError(null);
+
     try {
       await api.put('/profil-desa', {
         luasWilayah,
@@ -135,7 +146,7 @@ export default function ProfilAdmin() {
       });
       showToastMsg('Data geografis berhasil disimpan.');
     } catch (err: any) {
-      setError(err.response?.data?.pesan || err.response?.data?.detail?.join(', ') || 'Terjadi kesalahan saat menyimpan profil.');
+      handleError(err, 'Terjadi kesalahan saat menyimpan profil.');
     } finally {
       setIsSaving(false);
     }
@@ -144,12 +155,12 @@ export default function ProfilAdmin() {
   // Handler Sejarah
   const handleSaveSejarah = async () => {
     setIsSavingSejarah(true);
-    setError(null);
+
     try {
       await api.put('/profil-desa/sejarah', { sejarah });
       showToastMsg('Sejarah desa berhasil disimpan.');
     } catch (err: any) {
-      setError(err.response?.data?.pesan || err.response?.data?.detail?.join(', ') || 'Gagal menyimpan sejarah.');
+      handleError(err, 'Gagal menyimpan sejarah.');
     } finally {
       setIsSavingSejarah(false);
     }
@@ -158,12 +169,12 @@ export default function ProfilAdmin() {
   // Handler Visi Misi
   const handleSaveVisiMisi = async () => {
     setIsSavingVisiMisi(true);
-    setError(null);
+
     try {
       await api.put('/profil-desa/visi-misi', { visi, misi });
       showToastMsg('Visi & Misi berhasil disimpan.');
     } catch (err: any) {
-      setError(err.response?.data?.pesan || err.response?.data?.detail?.join(', ') || 'Gagal menyimpan visi misi.');
+      handleError(err, 'Gagal menyimpan visi misi.');
     } finally {
       setIsSavingVisiMisi(false);
     }
@@ -171,9 +182,9 @@ export default function ProfilAdmin() {
 
   // Handler Struktur Organisasi
   const handleSaveOrganisasi = async () => {
-    setError(null);
+
     if (!formOrg.nama || !formOrg.jabatan) {
-      setError('Nama dan Jabatan wajib diisi.');
+      showToastMsg('Nama dan Jabatan wajib diisi.', 'error');
       return;
     }
     try {
@@ -205,20 +216,20 @@ export default function ProfilAdmin() {
       await fetchData();
       showToastMsg(isEditingOrg ? 'Struktur organisasi diperbarui.' : 'Anggota baru ditambahkan.');
     } catch (err: any) {
-      setError(err.response?.data?.pesan || err.response?.data?.detail?.join(', ') || 'Terjadi kesalahan pada struktur organisasi.');
+      handleError(err, 'Terjadi kesalahan pada struktur organisasi.');
     }
   };
 
   const handleOrgImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    setError(null);
+
     if (file) {
       if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
-        setError('Format gambar harus JPG, PNG, atau WEBP.');
+        showToastMsg('Format gambar harus JPG, PNG, atau WEBP.', 'error');
         return;
       }
       if (file.size > 2 * 1024 * 1024) {
-        setError('Ukuran gambar maksimal 2MB.');
+        showToastMsg('Ukuran gambar maksimal 2MB.', 'error');
         return;
       }
       setFileOrg(file);
@@ -235,7 +246,7 @@ export default function ProfilAdmin() {
       await fetchData();
       showToastMsg('Anggota dihapus.');
     } catch (err: any) {
-      setError(err.response?.data?.pesan || 'Gagal menghapus.');
+      handleError(err, 'Gagal menghapus.');
       setDeleteOrgConfirm(null);
     }
   };
@@ -255,7 +266,7 @@ export default function ProfilAdmin() {
 
   // Handler Riwayat Kuwu
   const handleSaveRiwayat = async () => {
-    setError(null);
+
     try {
       const payload: any = { nama: formRiwayat.nama, masaJabatan: formRiwayat.masaJabatan, urutan: formRiwayat.urutan };
       if (formRiwayat.keterangan) payload.keterangan = formRiwayat.keterangan;
@@ -269,7 +280,7 @@ export default function ProfilAdmin() {
       await fetchData();
       showToastMsg(isEditingRiwayat ? 'Riwayat diperbarui.' : 'Riwayat baru ditambahkan.');
     } catch (err: any) {
-      setError(err.response?.data?.pesan || err.response?.data?.detail?.join(', ') || 'Terjadi kesalahan pada riwayat kuwu.');
+      handleError(err, 'Terjadi kesalahan pada riwayat kuwu.');
     }
   };
 
@@ -280,7 +291,7 @@ export default function ProfilAdmin() {
       await fetchData();
       showToastMsg('Riwayat dihapus.');
     } catch (err: any) {
-      setError(err.response?.data?.pesan || 'Gagal menghapus.');
+      handleError(err, 'Gagal menghapus.');
       setDeleteRiwayatConfirm(null);
     }
   };
@@ -311,16 +322,16 @@ export default function ProfilAdmin() {
         'image/webp',
       ];
       if (!formatDiizinkan.includes(f.type.toLowerCase())) {
-        setError('Format foto galeri harus JPG, JPEG, PNG, HEIC, HEIF, atau WEBP.');
+        showToastMsg('Format foto galeri harus JPG, JPEG, PNG, HEIC, HEIF, atau WEBP.', 'error');
         return;
       }
       if (f.size > 5 * 1024 * 1024) {
-        setError('Ukuran foto galeri maksimal 5MB sesuai batas backend.');
+        showToastMsg('Ukuran foto galeri maksimal 5MB sesuai batas backend.', 'error');
         return;
       }
     }
 
-    setError(null);
+
     setFileGaleri(f);
     if (f) {
       const url = URL.createObjectURL(f);
@@ -332,11 +343,11 @@ export default function ProfilAdmin() {
 
   const handleUploadGaleri = async () => {
     if (!fileGaleri) {
-      setError('Foto galeri wajib dipilih (jpg, jpeg, png, heic).');
+      showToastMsg('Foto galeri wajib dipilih (jpg, jpeg, png, heic).', 'error');
       return;
     }
     setIsSavingGaleri(true);
-    setError(null);
+
     try {
       const fd = new FormData();
       fd.append('foto', fileGaleri);
@@ -351,7 +362,7 @@ export default function ProfilAdmin() {
       await fetchData();
       showToastMsg('Galeri berhasil ditambahkan.');
     } catch (err: any) {
-      setError(err.response?.data?.pesan || err.response?.data?.detail?.join(', ') || 'Gagal mengunggah galeri.');
+      handleError(err, 'Gagal mengunggah galeri.');
     } finally {
       setIsSavingGaleri(false);
     }
@@ -364,7 +375,7 @@ export default function ProfilAdmin() {
       await fetchData();
       showToastMsg('Galeri dihapus.');
     } catch (err: any) {
-      setError(err.response?.data?.pesan || 'Gagal menghapus galeri.');
+      handleError(err, 'Gagal menghapus galeri.');
       setDeleteGaleriConfirm(null);
     }
   };
@@ -389,15 +400,7 @@ export default function ProfilAdmin() {
         </p>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl mb-6 flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 shrink-0" />
-          <p className="text-sm font-bold">{error}</p>
-          <button onClick={() => setError(null)} className="ml-auto p-1 hover:bg-red-100 rounded"><X className="w-4 h-4"/></button>
-        </div>
-      )}
-
-      <div className="space-y-6">
+      {/* Quick Navigation */}<div className="space-y-6">
         
         {/* 1. Sejarah Desa */}
         <div className="bg-[#F8FAFC] rounded-2xl border border-slate-200 shadow-sm p-6 md:p-8">
@@ -730,11 +733,15 @@ export default function ProfilAdmin() {
 
       {/* Save Toast Notification */}
       <div className={`fixed bottom-6 right-6 md:bottom-8 md:right-8 transition-all duration-500 z-50 ${showToast ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
-        <div className="bg-[#0A3D2D] text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+        <div className={`px-6 py-4 rounded-xl shadow-2xl flex items-start gap-3 ${toastType === 'success' ? 'bg-[#0A3D2D] text-white' : 'bg-red-600 text-white'}`}>
+          {toastType === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-200 shrink-0 mt-0.5" />
+          )}
           <div>
-            <p className="text-sm font-bold">Berhasil disimpan</p>
-            <p className="text-xs text-emerald-100/70">{toastMsg}</p>
+            <p className="text-sm font-bold">{toastType === 'success' ? 'Berhasil' : 'Terjadi Kesalahan'}</p>
+            <p className={`text-xs mt-1 whitespace-pre-wrap max-w-sm ${toastType === 'success' ? 'text-emerald-100/70' : 'text-red-100'}`}>{toastMsg}</p>
           </div>
         </div>
       </div>
@@ -775,3 +782,4 @@ export default function ProfilAdmin() {
     </div>
   );
 }
+

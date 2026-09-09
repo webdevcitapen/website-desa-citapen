@@ -72,7 +72,7 @@ export default function ProfilPengguna() {
       showNotif('sukses', 'Profil berhasil diperbarui');
     } catch (error: any) {
       console.error('Gagal simpan profil', error);
-      showNotif('error', error.response?.data?.pesan || 'Gagal menyimpan profil');
+      showNotif('error', error.response?.data?.pesan || error.response?.data?.detail?.join('\n') || 'Gagal menyimpan profil');
     } finally {
       setIsSaving(false);
     }
@@ -88,7 +88,7 @@ export default function ProfilPengguna() {
       setProfil(prev => ({ ...prev, username: usernameBaru }));
     } catch (error: any) {
       console.error('Gagal ubah username', error);
-      showNotif('error', error.response?.data?.pesan || 'Gagal mengubah username');
+      showNotif('error', error.response?.data?.pesan || error.response?.data?.detail?.join('\n') || 'Gagal mengubah username');
     } finally {
       setIsSaving(false);
     }
@@ -117,7 +117,7 @@ export default function ProfilPengguna() {
       setKonfirmasiSandi('');
     } catch (error: any) {
       console.error('Gagal ubah sandi', error);
-      showNotif('error', error.response?.data?.pesan || 'Gagal mengubah kata sandi');
+      showNotif('error', error.response?.data?.pesan || error.response?.data?.detail?.join('\n') || 'Gagal mengubah kata sandi');
     } finally {
       setIsSaving(false);
     }
@@ -162,7 +162,7 @@ export default function ProfilPengguna() {
       }
     } catch (error: any) {
       console.error('Gagal upload foto', error);
-      showNotif('error', error.response?.data?.pesan || 'Gagal mengunggah foto');
+      showNotif('error', error.response?.data?.pesan || error.response?.data?.detail?.join('\n') || 'Gagal mengunggah foto');
     } finally {
       setIsSaving(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -184,14 +184,20 @@ export default function ProfilPengguna() {
         <p className="text-slate-500">Kelola informasi pribadi dan pengaturan keamanan akun Anda.</p>
       </div>
 
-      {notif && (
-        <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
-          notif.tipe === 'sukses' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'
-        }`}>
-          {notif.tipe === 'sukses' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-          <p className="text-sm font-medium">{notif.pesan}</p>
+      {/* Save Toast Notification */}
+      <div className={`fixed bottom-6 right-6 md:bottom-8 md:right-8 transition-all duration-500 z-50 ${notif ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
+        <div className={`px-6 py-4 rounded-xl shadow-2xl flex items-start gap-3 ${notif?.tipe === 'sukses' ? 'bg-[#0A3D2D] text-white' : 'bg-red-600 text-white'}`}>
+          {notif?.tipe === 'sukses' ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-200 shrink-0 mt-0.5" />
+          )}
+          <div>
+            <p className="text-sm font-bold">{notif?.tipe === 'sukses' ? 'Berhasil' : 'Terjadi Kesalahan'}</p>
+            <p className={`text-xs mt-1 whitespace-pre-wrap max-w-sm ${notif?.tipe === 'sukses' ? 'text-emerald-100/70' : 'text-red-100'}`}>{notif?.pesan}</p>
+          </div>
         </div>
-      )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         

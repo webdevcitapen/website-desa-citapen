@@ -72,7 +72,7 @@ export default function Login() {
       {/* Background Image with Blur */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/bg-login.jpg')" }}
+        style={{ backgroundImage: "url('/images/bg-login.jpeg')" }}
       ></div>
       {/* Overlay to ensure form readability over the image */}
       <div className="absolute inset-0 z-0 bg-slate-900/30 backdrop-blur-sm"></div>
@@ -106,7 +106,7 @@ export default function Login() {
           {/* NIK Field */}
           <div className="mb-4">
             <label className="block text-[11px] font-bold text-slate-800 mb-1.5" htmlFor="nik">
-              NIK / Nama Pengguna
+              NIK / Kegiatan Desa & UmumNama Pengguna
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">

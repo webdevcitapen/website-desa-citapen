@@ -164,8 +164,8 @@ export default function Beranda() {
             </div>
 
             {/* Gambar Peta */}
-            <div className="w-full lg:w-1/2 flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-md bg-white p-3 rounded-2xl shadow-xl rotate-1 hover:rotate-0 transition-transform duration-500">
+            <div className="w-full lg:w-1/2 flex justify-center lg:justify-end mt-6 lg:mt-0">
+              <div className="relative w-[92%] sm:w-full max-w-md bg-white p-2.5 sm:p-3 rounded-2xl shadow-xl rotate-1 hover:rotate-0 transition-transform duration-500">
                 <div className="w-full rounded-xl overflow-hidden border border-slate-200">
                   <img
                     src="/images/peta-desa.png"
@@ -177,7 +177,7 @@ export default function Beranda() {
                     className="w-full h-auto object-contain"
                   />
                 </div>
-                <div className="absolute -bottom-4 -left-4 bg-[#0A3D2D] text-white px-4 py-2 rounded-lg font-bold text-sm shadow-lg">
+                <div className="absolute -bottom-3 -left-3 sm:-bottom-4 sm:-left-4 bg-[#0A3D2D] text-white px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-lg font-bold text-xs sm:text-sm shadow-lg">
                   Wilayah {namaDesa}
                 </div>
               </div>

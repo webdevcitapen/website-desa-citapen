@@ -182,7 +182,16 @@ export default function ProfilAdmin() {
       formData.append('jabatan', formOrg.jabatan);
       formData.append('urutan', formOrg.urutan.toString());
       if (formOrg.keterangan) formData.append('keterangan', formOrg.keterangan);
-      if (fileOrg) formData.append('foto', fileOrg);
+      if (fileOrg) {
+        formData.append('foto', fileOrg);
+      } else if (isEditingOrg !== null && previewOrg === null) {
+        // User menghapus foto yang sudah ada (preview dibersihkan tanpa upload baru)
+        // Kirim flag agar backend menghapus file lama
+        const original = organisasi.find((o: any) => o.id === isEditingOrg);
+        if (original?.foto) {
+          formData.append('hapusFoto', 'true');
+        }
+      }
 
       if (isEditingOrg !== null) {
         await api.put(`/struktur-organisasi/${isEditingOrg}`, formData);

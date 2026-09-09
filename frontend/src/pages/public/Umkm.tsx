@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MessageCircle, Store, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, MessageCircle, Store, Search, Filter, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import BottomNav from '../../components/layout/BottomNav';
@@ -47,7 +47,8 @@ export default function Umkm() {
   const [totalData, setTotalData] = useState(0);
   const perHalaman = 9;
   
-  const [selectedUmkm, setSelectedUmkm] = useState<any | null>(null); // State untuk modal profil toko
+  const [selectedUmkm, setSelectedUmkm] = useState<any | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<UmkmItem | null>(null);
 
   const navigate = useNavigate();
   const abortRef = useRef<AbortController | null>(null);
@@ -195,10 +196,10 @@ export default function Umkm() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
               {produkList.map((item) => (
-                <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden flex flex-col h-full">
-                  <div className="relative h-56 w-full bg-slate-100">
+                <div key={item.id} onClick={() => setSelectedProduct(item)} className="cursor-pointer group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full hover:-translate-y-1">
+                  <div className="relative aspect-[3/4] w-full bg-slate-100">
                     <img src={item.foto ? getImageUrl(item.foto, { width: 600 }) : '/images/hero-bg.png'} alt={item.nama} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }} />
                     {item.kategori && item.kategori.nama && (<div className="absolute top-4 left-4 bg-white text-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm tracking-wide">{item.kategori.nama}</div>)}
                   </div>
@@ -206,7 +207,7 @@ export default function Umkm() {
                     <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-1 leading-snug">{item.nama}</h3>
                     {item.umkm?.nama && (
                       <p 
-                        onClick={() => {
+                        onClick={(e) => { e.stopPropagation(); 
                           const u = umkmList.find(x => x.nama === item.umkm?.nama);
                           setSelectedUmkm(u || { nama: item.umkm?.nama, nomorHp: item.umkm?.nomorHp });
                         }}
@@ -217,7 +218,7 @@ export default function Umkm() {
                     )}
                     <p className="text-slate-500 text-sm md:text-[15px] line-clamp-3 leading-relaxed flex-grow mb-6">{item.deskripsi}</p>
                     <div className="mb-6"><span className="text-slate-800 font-extrabold text-[15px]">{formatHarga(item.harga)}</span></div>
-                    <button onClick={() => handleWhatsApp(item.umkm?.nomorHp || undefined, item.nama)} className="w-full flex items-center justify-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5133] text-white py-3 rounded-lg font-bold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={!item.umkm?.nomorHp}><MessageCircle className="w-4 h-4" />Hubungi via WhatsApp</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleWhatsApp(item.umkm?.nomorHp || undefined, item.nama); }} className="w-full flex items-center justify-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5133] text-white py-3 rounded-lg font-bold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={!item.umkm?.nomorHp}><MessageCircle className="w-4 h-4" />Hubungi via WhatsApp</button>
                   </div>
                 </div>
               ))}
@@ -237,6 +238,72 @@ export default function Umkm() {
           </>
         )}
       </main>
+
+      
+      {/* Modal Detail Produk */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+            onClick={() => setSelectedProduct(null)}
+          ></div>
+          
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl relative z-10 overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col md:flex-row">
+            {/* Left: Image (Portrait format like card) */}
+            <div className="md:w-[45%] bg-slate-100 flex shrink-0">
+               <img src={selectedProduct.foto ? getImageUrl(selectedProduct.foto, { width: 600 }) : '/images/hero-bg.png'} alt={selectedProduct.nama} className="w-full h-64 md:h-full object-cover" />
+            </div>
+            
+            {/* Right: Info */}
+            <div className="p-6 flex flex-col flex-grow overflow-y-auto max-h-[60vh] md:max-h-[90vh]">
+              <div className="flex justify-end mb-2">
+                <button 
+                  onClick={() => setSelectedProduct(null)}
+                  className="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full p-2 transition-colors absolute top-4 right-4 md:static md:mb-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="mb-4 pr-6 md:pr-0">
+                {selectedProduct.kategori && selectedProduct.kategori.nama && (
+                   <span className="inline-block bg-emerald-50 text-emerald-700 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full mb-3">{selectedProduct.kategori.nama}</span>
+                )}
+                <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-2 leading-tight">{selectedProduct.nama}</h2>
+                <div className="text-lg md:text-xl font-extrabold text-[#0A3D2D] mb-4">{formatHarga(selectedProduct.harga)}</div>
+              </div>
+
+              <div className="text-sm md:text-[15px] text-slate-600 mb-6 leading-relaxed">
+                <p className="whitespace-pre-wrap">{selectedProduct.deskripsi}</p>
+              </div>
+
+              <div className="mt-auto pt-6 border-t border-slate-100">
+                <h4 className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Informasi UMKM</h4>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 shrink-0">
+                    <Store className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm md:text-base">{selectedProduct.umkm?.nama}</p>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    setSelectedProduct(null);
+                    handleWhatsApp(selectedProduct.umkm?.nomorHp || undefined, selectedProduct.nama);
+                  }} 
+                  className="w-full flex items-center justify-center gap-2 bg-[#8B5E3C] hover:bg-[#7a5133] text-white py-3 rounded-xl font-bold text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+                  disabled={!selectedProduct.umkm?.nomorHp}
+                >
+                  <MessageCircle className="w-5 h-5" /> Hubungi Penjual via WhatsApp
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Modal UMKM Profil */}
       {selectedUmkm && (

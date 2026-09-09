@@ -18,7 +18,16 @@ export interface BeritaItem {
   penulis?: { id: number; namaLengkap: string };
 }
 
-const KATEGORI_BERITA = ['Semua', 'Umum', 'Infrastruktur', 'Kesehatan', 'Pendidikan', 'Pertanian', 'Ekonomi', 'Sosial', 'Budaya'];
+const KATEGORI_BERITA = [
+  'Semua',
+  'Pendidikan & Literasi',
+  'Kesehatan & Lingkungan',
+  'Ekonomi & UMKM',
+  'Teknologi & Inovasi',
+  'Sosial & Keagamaan',
+  'Pembangunan & Infrastruktur',
+  'Kegiatan Desa & Umum',
+];
 const SORT_OPTIONS = [
   { value: 'terbaru', label: 'Terbaru' },
   { value: 'terlama', label: 'Terlama' },

@@ -131,6 +131,14 @@ export const SkemaAdminUbahUsername = z.object({
 
 /** Daftar kategori berita yang diizinkan. */
 export const DAFTAR_KATEGORI_BERITA = [
+  'Pendidikan & Literasi',
+  'Kesehatan & Lingkungan',
+  'Ekonomi & UMKM',
+  'Teknologi & Inovasi',
+  'Sosial & Keagamaan',
+  'Pembangunan & Infrastruktur',
+  'Kegiatan Desa & Umum',
+  // Kompatibilitas data lama
   'Umum',
   'Infrastruktur',
   'Kesehatan',
@@ -155,7 +163,7 @@ export const SkemaBerita = z.object({
       errorMap: () => ({ message: 'Kategori berita tidak valid' }),
     })
     .optional()
-    .default('Umum'),
+    .default('Kegiatan Desa & Umum'),
 });
 
 /** Skema untuk membuat atau mengubah produk. */

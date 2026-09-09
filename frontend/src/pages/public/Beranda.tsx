@@ -59,7 +59,8 @@ export default function Beranda() {
   }, []);
 
   const p = profil || {};
-  const luasWilayah = p.luasWilayah || p.luas_wilayah || '-';
+  const rawLuasWilayah = p.luasWilayah || p.luas_wilayah;
+  const luasWilayah = rawLuasWilayah?.trim() && rawLuasWilayah !== '-' ? rawLuasWilayah : '± 473,3 Ha';
   const visi = p.visi || 'Mewujudkan masyarakat desa yang sejahtera, mandiri, dan berbudaya melalui tata kelola yang transparan dan inovatif.';
   const namaDesa = p.nama_desa || 'Desa Citapen';
 
@@ -82,9 +83,6 @@ export default function Beranda() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Link to="/profil" className="bg-[#082d22] hover:bg-emerald-900 text-white font-semibold py-3 px-5 sm:px-8 rounded-lg text-center transition-colors shadow-lg text-sm tracking-wide">
                 Jelajahi Profil Desa
-              </Link>
-              <Link to="/profil#data-penduduk" className="bg-transparent hover:bg-white/10 text-white border-2 border-white/80 font-semibold py-3 px-5 sm:px-8 rounded-lg text-center transition-colors shadow-lg text-sm tracking-wide">
-                Lihat Data Penduduk
               </Link>
             </div>
           </div>
@@ -111,7 +109,7 @@ export default function Beranda() {
             </div>
             <p className="text-sm text-slate-500 font-medium mb-1">Luas Wilayah</p>
             <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2 break-words">{luasWilayah}</h3>
-            <p className="text-[11px] text-slate-500 mt-auto flex items-center gap-1"><MapPin className="w-3 h-3" /> Berdasarkan Data Profil</p>
+            <p className="text-[11px] text-slate-500 mt-auto flex items-center gap-1"><MapPin className="w-3 h-3 shrink-0" /> Wilayah Desa Citapen</p>
           </div>
 
           {/* Card 3 */}

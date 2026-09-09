@@ -152,7 +152,7 @@ export default function DaftarBerita() {
           </h1>
           <p className="text-sm font-medium text-slate-500">
             {userProfile?.peran === 'publikasi'
-              ? `Menampilkan ${total} berita milik Anda (max ${perHalaman} per halaman).`
+              ? `Menampilkan ${total} berita milik Anda.`
               : `Kelola pengumuman dan berita terbaru untuk warga Desa Citapen. Total ${total} artikel.`}
           </p>
         </div>

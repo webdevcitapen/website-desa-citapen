@@ -155,7 +155,7 @@ export default function Umkm() {
     if (!noWa) return;
     const cleaned = noWa.replace(/[^0-9]/g, '');
     const withCountry = cleaned.startsWith('0') ? '62' + cleaned.slice(1) : cleaned;
-    const message = encodeURIComponent(`Halo, saya tertarik dengan produk ${produkName} dari Desa Citapen.`);
+    const message = encodeURIComponent(`Halo, saya menemukan produk ini melalui Website Profil Desa Citapen. Saya tertarik untuk melakukan pemesanan ${produkName}. Apakah produk ini masih tersedia?`);
     window.open(`https://wa.me/${withCountry}?text=${message}`, '_blank');
   };
 

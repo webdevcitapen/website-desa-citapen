@@ -204,13 +204,14 @@ export default function FormBerita() {
                 }}
               >
                 <option value="Pilih Kategori" disabled>Pilih Kategori</option>
-                <option>Pendidikan & Literasi</option>
-                <option>Kesehatan & Lingkungan</option>
-                <option>Ekonomi & UMKM</option>
-                <option>Teknologi & Inovasi</option>
-                <option>Sosial & Keagamaan</option>
-                <option>Pembangunan & Infrastruktur</option>
-                <option>Kegiatan Desa & Umum</option>
+                <option value="Umum">Umum</option>
+                <option value="Infrastruktur">Infrastruktur</option>
+                <option value="Kesehatan">Kesehatan</option>
+                <option value="Pendidikan">Pendidikan</option>
+                <option value="Pertanian">Pertanian</option>
+                <option value="Ekonomi">Ekonomi</option>
+                <option value="Sosial">Sosial</option>
+                <option value="Budaya">Budaya</option>
               </select>
             </div>
             

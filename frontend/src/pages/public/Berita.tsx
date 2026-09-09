@@ -18,7 +18,7 @@ export interface BeritaItem {
   penulis?: { id: number; namaLengkap: string };
 }
 
-const KATEGORI_BERITA = ['Semua', 'Umum', 'Infrastruktur', 'Kesehatan', 'Pendidikan', 'Ekonomi'];
+const KATEGORI_BERITA = ['Semua', 'Umum', 'Infrastruktur', 'Kesehatan', 'Pendidikan', 'Pertanian', 'Ekonomi', 'Sosial', 'Budaya'];
 const SORT_OPTIONS = [
   { value: 'terbaru', label: 'Terbaru' },
   { value: 'terlama', label: 'Terlama' },

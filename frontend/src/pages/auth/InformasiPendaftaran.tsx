@@ -46,7 +46,7 @@ export default function InformasiPendaftaran() {
           Daftar Akun
         </h1>
         <p className="text-sm md:text-[15px] text-slate-600 text-center mb-8 leading-relaxed font-medium px-2">
-          Untuk menjaga keamanan dan validitas data desa, pendaftaran akun Admin dan UMKM dibantu melalui verifikasi WhatsApp.
+          Untuk menjaga keamanan dan validitas data desa, pendaftaran akun Publikasi Berita akan diverifikasi melalui WhatsApp.
         </p>
 
         {/* Steps */}

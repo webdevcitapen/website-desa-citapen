@@ -174,7 +174,7 @@ export default function Login() {
         {/* WhatsApp Admin */}
         <div className="w-full text-center border-t border-slate-200 pt-5">
           <p className="text-[10px] md:text-[11px] text-slate-500 mb-3 leading-relaxed font-medium">
-            Belum punya akun? Hubungi Admin melalui WhatsApp untuk pembuatan akun.
+            Belum punya akun Publikasi? Hubungi Admin melalui WhatsApp untuk pembuatan akun.
           </p>
           <button
             onClick={handleWhatsAppAdmin}

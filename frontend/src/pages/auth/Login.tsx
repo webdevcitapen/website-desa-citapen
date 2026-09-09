@@ -4,7 +4,7 @@ import { User, Lock, ArrowRight, ArrowLeft, MessageCircle } from 'lucide-react';
 import api from '../../services/api';
 
 export default function Login() {
-  const [nik, setNik] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export default function Login() {
     e.preventDefault();
     setError(null);
     
-    if (!nik || !password) {
+    if (!username || !password) {
       setError('Mohon isi Username dan Kata Sandi');
       return;
     }
@@ -22,7 +22,7 @@ export default function Login() {
     setIsLoading(true);
     try {
       const response = await api.post('/autentikasi/masuk', {
-        username: nik,
+        username: username,
         kataSandi: password
       });
 
@@ -103,20 +103,20 @@ export default function Login() {
             </div>
           )}
           
-          {/* NIK Field */}
+          {/* Username Field */}
           <div className="mb-4">
-            <label className="block text-[11px] font-bold text-slate-800 mb-1.5" htmlFor="nik">
-              NIK / Kegiatan Desa & UmumNama Pengguna
+            <label className="block text-[11px] font-bold text-slate-800 mb-1.5" htmlFor="username">
+              Username
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <User className="h-4 w-4" />
               </div>
               <input
-                id="nik"
+                id="username"
                 type="text"
-                value={nik}
-                onChange={(e) => setNik(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 placeholder="Masukkan Username Anda"
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0A3D2D] focus:border-transparent transition-all placeholder:text-slate-400 font-medium text-slate-800"
                 required

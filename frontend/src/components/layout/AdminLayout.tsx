@@ -125,7 +125,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FBFBFF] flex">
+    <div className="min-h-[100dvh] bg-[#FBFBFF] flex">
       
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
@@ -137,7 +137,7 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <aside 
-        className={`fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-[#F8F9FA] border-r border-slate-200 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed md:sticky top-0 left-0 z-50 h-[100dvh] w-64 bg-[#F8F9FA] border-r border-slate-200 flex flex-col transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
@@ -246,7 +246,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-[100dvh] overflow-hidden">
         
         {/* Topbar */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">

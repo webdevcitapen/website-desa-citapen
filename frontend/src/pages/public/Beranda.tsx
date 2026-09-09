@@ -72,7 +72,7 @@ export default function Beranda() {
       <section className="relative w-full min-h-[520px] h-[calc(100svh-4rem)] max-h-[760px] flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-[url('/images/hero-bg.png')] bg-cover bg-center" style={{ backgroundImage: "url('/images/hero-bg.png')" }}></div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
-        <div className="relative z-10 w-full px-4 sm:px-6 md:px-12 lg:px-24">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white mb-5 sm:mb-6 leading-tight drop-shadow-lg">
               Selamat Datang di<br />{namaDesa}

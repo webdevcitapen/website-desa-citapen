@@ -147,7 +147,7 @@ export async function ambilDetailBerita(id: number): Promise<DataBerita> {
 export async function ubahBerita(
   id: number,
   penggunaId: number,
-  peran: Peran,
+  _peran: Peran,
   data: DataSimpanBerita,
   berkasGambar?: BerkasUnggahan,
 ): Promise<DataBerita> {

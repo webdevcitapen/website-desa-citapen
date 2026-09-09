@@ -41,6 +41,7 @@ export const buatStrukturOrganisasi = bungkusHandler(
       nama: data.nama,
       jabatan: data.jabatan,
       urutan: data.urutan ?? 0,
+      foto: permintaan.file?.filename,
     });
     kirimSuksesDibuat(tanggapan, item, 'Struktur organisasi berhasil dibuat');
   },
@@ -55,6 +56,7 @@ export const perbaruiStrukturOrganisasi = bungkusHandler(
       nama: data.nama,
       jabatan: data.jabatan,
       urutan: data.urutan ?? 0,
+      foto: permintaan.file?.filename,
     });
     kirimSukses(tanggapan, item, 'Struktur organisasi berhasil diperbarui');
   },

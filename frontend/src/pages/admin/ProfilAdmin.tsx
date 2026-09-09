@@ -32,6 +32,9 @@ export default function ProfilAdmin() {
   // State untuk Struktur Organisasi Dinamis
   const [organisasi, setOrganisasi] = useState<any[]>([]);
   const [formOrg, setFormOrg] = useState({ nama: '', jabatan: '', urutan: 0, keterangan: '' });
+  const [fileOrg, setFileOrg] = useState<File | null>(null);
+  const [previewOrg, setPreviewOrg] = useState<string | null>(null);
+  const orgFileInputRef = useRef<HTMLInputElement>(null);
   const [isEditingOrg, setIsEditingOrg] = useState<number | null>(null);
   const [deleteOrgConfirm, setDeleteOrgConfirm] = useState<number | null>(null);
   const [deleteRiwayatConfirm, setDeleteRiwayatConfirm] = useState<number | null>(null);
@@ -169,20 +172,50 @@ export default function ProfilAdmin() {
   // Handler Struktur Organisasi
   const handleSaveOrganisasi = async () => {
     setError(null);
+    if (!formOrg.nama || !formOrg.jabatan) {
+      setError('Nama dan Jabatan wajib diisi.');
+      return;
+    }
     try {
-      const payload: any = { nama: formOrg.nama, jabatan: formOrg.jabatan, urutan: formOrg.urutan };
-      if (formOrg.keterangan) payload.keterangan = formOrg.keterangan;
+      const formData = new FormData();
+      formData.append('nama', formOrg.nama);
+      formData.append('jabatan', formOrg.jabatan);
+      formData.append('urutan', formOrg.urutan.toString());
+      if (formOrg.keterangan) formData.append('keterangan', formOrg.keterangan);
+      if (fileOrg) formData.append('foto', fileOrg);
+
       if (isEditingOrg !== null) {
-        await api.put(`/struktur-organisasi/${isEditingOrg}`, payload);
+        await api.put(`/struktur-organisasi/${isEditingOrg}`, formData);
       } else {
-        await api.post('/struktur-organisasi', payload);
+        await api.post('/struktur-organisasi', formData);
       }
       setFormOrg({ nama: '', jabatan: '', urutan: 0, keterangan: '' });
+      setFileOrg(null);
+      setPreviewOrg(null);
       setIsEditingOrg(null);
       await fetchData();
       showToastMsg(isEditingOrg ? 'Struktur organisasi diperbarui.' : 'Anggota baru ditambahkan.');
     } catch (err: any) {
       setError(err.response?.data?.pesan || err.response?.data?.detail?.join(', ') || 'Terjadi kesalahan pada struktur organisasi.');
+    }
+  };
+
+  const handleOrgImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setError(null);
+    if (file) {
+      if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+        setError('Format gambar harus JPG, PNG, atau WEBP.');
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        setError('Ukuran gambar maksimal 2MB.');
+        return;
+      }
+      setFileOrg(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewOrg(reader.result as string);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -206,6 +239,8 @@ export default function ProfilAdmin() {
       urutan: org.urutan,
       keterangan: org.keterangan || ''
     });
+    setFileOrg(null);
+    setPreviewOrg(org.foto ? getImageUrl(org.foto) : null);
     window.scrollTo({ top: 400, behavior: 'smooth' });
   };
 
@@ -504,6 +539,34 @@ export default function ProfilAdmin() {
               <input type="number" placeholder="Urutan Tampil (misal: 1)" value={formOrg.urutan} onChange={(e) => setFormOrg({...formOrg, urutan: parseInt(e.target.value) || 0})} className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:border-[#0A3D2D] outline-none" />
               <input type="text" placeholder="Keterangan Tambahan (Opsional)" value={formOrg.keterangan} onChange={(e) => setFormOrg({...formOrg, keterangan: e.target.value})} className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:border-[#0A3D2D] outline-none" />
             </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-slate-700 mb-2">Foto Anggota (Opsional)</label>
+              <div className="flex items-center gap-4">
+                {previewOrg ? (
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-slate-200 shrink-0">
+                    <img src={previewOrg} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center shrink-0">
+                    <Users className="w-6 h-6 text-slate-400" />
+                  </div>
+                )}
+                <div>
+                  <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" className="hidden" ref={orgFileInputRef} onChange={handleOrgImageChange} />
+                  <button onClick={() => orgFileInputRef.current?.click()} className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-bold border border-slate-200 transition-colors">
+                    Pilih Foto
+                  </button>
+                  {previewOrg && (
+                    <button onClick={() => { setFileOrg(null); setPreviewOrg(null); }} className="text-xs text-red-500 hover:text-red-700 font-bold ml-3">
+                      Hapus
+                    </button>
+                  )}
+                  <p className="text-[10px] text-slate-400 mt-1">Format JPG, PNG, WEBP max 2MB (Rasio 1:1 direkomendasikan)</p>
+                </div>
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <button onClick={handleSaveOrganisasi} className="bg-[#0A3D2D] text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-[#072a1f]">
                 {isEditingOrg ? <Save className="w-4 h-4"/> : <Plus className="w-4 h-4"/>}

@@ -69,11 +69,13 @@ export async function tambahStruktur(data: {
   nama: string;
   jabatan: string;
   urutan: number;
+  foto?: string | null;
 }): Promise<DataStrukturOrganisasi> {
   const item = await buatStruktur({
     nama: data.nama,
     jabatan: data.jabatan,
     urutan: data.urutan,
+    foto: data.foto,
   });
   logger.info({ strukturId: item.id }, 'Struktur organisasi berhasil dibuat');
   return perkayaDenganAvatarFallback({
@@ -90,12 +92,13 @@ export async function tambahStruktur(data: {
 /** Mengubah struktur oleh admin desa. */
 export async function ubahStruktur(
   id: number,
-  data: { nama: string; jabatan: string; urutan: number },
+  data: { nama: string; jabatan: string; urutan: number; foto?: string | null },
 ): Promise<DataStrukturOrganisasi> {
   const item = await perbaruiStruktur(id, {
     nama: data.nama,
     jabatan: data.jabatan,
     urutan: data.urutan,
+    foto: data.foto,
   });
   logger.info({ strukturId: id }, 'Struktur organisasi berhasil diperbarui');
   return perkayaDenganAvatarFallback({

@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { autentikasi } from '../middleware/autentikasi.js';
 import { izinkanPeran } from '../middleware/otorisasi.js';
 import { validasiBadan, validasiParameter } from '../middleware/validasi.js';
+import { buatMiddlewareUnggah } from '../middleware/unggah-berkas.js';
 import { SkemaIdRute, SkemaStrukturOrganisasi } from '../validasi/skema.js';
 import {
   buatStrukturOrganisasi,
@@ -34,6 +35,7 @@ ruteStrukturOrganisasi.post(
   '/',
   autentikasi,
   izinkanPeran('admin'),
+  buatMiddlewareUnggah('foto'),
   validasiBadan(SkemaStrukturOrganisasi),
   buatStrukturOrganisasi,
 );
@@ -43,6 +45,7 @@ ruteStrukturOrganisasi.put(
   '/:id',
   autentikasi,
   izinkanPeran('admin'),
+  buatMiddlewareUnggah('foto'),
   validasiParameter(SkemaIdRute),
   validasiBadan(SkemaStrukturOrganisasi),
   perbaruiStrukturOrganisasi,

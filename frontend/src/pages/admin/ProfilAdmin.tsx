@@ -61,10 +61,10 @@ export default function ProfilAdmin() {
   const fetchData = async () => {
     try {
       const results = await Promise.allSettled([
-        api.get('/profil-desa'),
-        api.get('/struktur-organisasi'),
-        api.get('/riwayat-kuwu'),
-        api.get('/galeri')
+        api.get('/profil-desa', { headers: { 'Cache-Control': 'no-cache' } as any, params: { _t: Date.now() } as any }),
+        api.get('/struktur-organisasi', { headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' } as any, params: { _t: Date.now() } as any }),
+        api.get('/riwayat-kuwu', { headers: { 'Cache-Control': 'no-cache' } as any, params: { _t: Date.now() } as any }),
+        api.get('/galeri', { headers: { 'Cache-Control': 'no-cache' } as any, params: { _t: Date.now() } as any })
       ]);
       const [rProfil, rOrg, rRiwayat, rGaleri] = results;
 

@@ -32,10 +32,10 @@ export default function ProfilDesa() {
     const fetchData = async () => {
       try {
         const results = await Promise.allSettled([
-          api.get('/profil-desa', { signal: controller.signal as any }),
-          api.get('/struktur-organisasi', { signal: controller.signal as any }),
-          api.get('/riwayat-kuwu', { signal: controller.signal as any }),
-          api.get('/galeri', { signal: controller.signal as any })
+          api.get('/profil-desa', { signal: controller.signal as any, headers: { 'Cache-Control': 'no-cache' } as any }),
+          api.get('/struktur-organisasi', { signal: controller.signal as any, headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' } as any, params: { _t: Date.now() } as any }),
+          api.get('/riwayat-kuwu', { signal: controller.signal as any, headers: { 'Cache-Control': 'no-cache' } as any }),
+          api.get('/galeri', { signal: controller.signal as any, headers: { 'Cache-Control': 'no-cache' } as any })
         ]);
         const [rProfil, rOrg, rRiwayat, rGaleri] = results;
 

@@ -25,14 +25,18 @@ export default function DaftarPengguna() {
   const [totalHalaman, setTotalHalaman] = useState(1);
   const [totalData, setTotalData] = useState(0);
 
-  const fetchPengguna = async () => {
+    const fetchPengguna = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/admin/pengguna');
+      const response = await api.get(`/admin/pengguna?halaman=${halaman}&perHalaman=${perHalaman}`);
       if (response.data && response.data.data && response.data.data.daftar) {
         setPenggunaList(response.data.data.daftar);
+        setTotalHalaman(response.data.data.totalHalaman || 1);
+        setTotalData(response.data.data.total || response.data.data.daftar.length);
       } else if (response.data && response.data.daftar) {
         setPenggunaList(response.data.daftar);
+        setTotalHalaman(response.data.totalHalaman || 1);
+        setTotalData(response.data.total || response.data.daftar.length);
       }
     } catch (error) {
       console.error('Gagal mengambil data pengguna', error);
@@ -44,7 +48,9 @@ export default function DaftarPengguna() {
 
   useEffect(() => {
     fetchPengguna();
-    
+  }, [halaman]);
+
+  useEffect(() => {
     // Ambil info user yang sedang login untuk mencegah penghapusan akun sendiri
     const fetchCurrentUser = async () => {
       try {

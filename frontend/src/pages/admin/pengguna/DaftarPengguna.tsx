@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Edit2, Trash2, UserPlus } from 'lucide-react';
+import { Edit2, Trash2, UserPlus, ChevronLeft, ChevronRight } from 'lucide-react';
 import api, { getImageUrl } from '../../../services/api';
 import ConfirmModal from '../../../components/ui/ConfirmModal';
 
@@ -20,6 +20,10 @@ export default function DaftarPengguna() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [halaman, setHalaman] = useState(1);
+  const perHalaman = 10;
+  const [totalHalaman, setTotalHalaman] = useState(1);
+  const [totalData, setTotalData] = useState(0);
 
   const fetchPengguna = async () => {
     try {
@@ -217,6 +221,27 @@ export default function DaftarPengguna() {
         </div>
 
       </div>
+
+      
+      {/* Pagination */}
+      {!isLoading && totalData > 0 && (
+        <div className="flex flex-col items-center mt-6 gap-2">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setHalaman(p => Math.max(1, p - 1))} disabled={halaman === 1} className="w-9 h-9 rounded-xl border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {Array.from({ length: totalHalaman }, (_, i) => i + 1).slice(Math.max(0, halaman - 3), Math.min(totalHalaman, halaman + 2)).map(no => (
+              <button key={no} onClick={() => setHalaman(no)} className={`w-9 h-9 rounded-xl font-bold text-sm ${no === halaman ? 'bg-[#0A3D2D] text-white shadow' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                {no}
+              </button>
+            ))}
+            <button onClick={() => setHalaman(p => Math.min(totalHalaman, p + 1))} disabled={halaman === totalHalaman} className="w-9 h-9 rounded-xl border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <p className="text-xs text-slate-400">Halaman {halaman} dari {totalHalaman} • Menampilkan data {(halaman - 1) * perHalaman + 1} hingga {Math.min(halaman * perHalaman, totalData)} dari total {totalData} pengguna</p>
+        </div>
+      )}
 
       <ConfirmModal
         isOpen={deleteConfirm !== null}
